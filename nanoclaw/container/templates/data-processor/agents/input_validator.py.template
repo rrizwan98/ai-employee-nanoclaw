@@ -1,0 +1,35 @@
+"""
+Input Validator Agent
+
+Validates incoming {{INPUT_TYPE}} data and structures it according to
+{{DOMAIN}} validation rules: {{VALIDATION_RULES}}
+"""
+
+from agents_sdk import Agent
+from models.schemas import ValidatedInput
+from config import settings
+
+
+# Input Validator Agent with structured output
+input_validator = Agent(
+    name="{{DOMAIN}}_input_validator",
+    model=settings.MODEL_NAME,
+    instructions=f"""You are an input validation specialist for {{DOMAIN}} data.
+
+Your role is to:
+1. Validate incoming {{INPUT_TYPE}} data against these rules:
+   {{VALIDATION_RULES}}
+
+2. Extract and structure all relevant fields according to the ValidatedInput schema
+
+3. Flag any validation errors or missing required fields
+
+4. Normalize data formats (dates, numbers, text) to standard formats
+
+5. Add validation metadata (timestamp, confidence, warnings)
+
+Always respond with a structured ValidatedInput object. If validation fails,
+set is_valid=False and populate the errors list with specific issues.
+""",
+    output_type=ValidatedInput,  # Structured output enforcement
+)

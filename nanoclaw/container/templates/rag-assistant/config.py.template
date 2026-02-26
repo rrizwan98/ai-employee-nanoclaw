@@ -1,0 +1,37 @@
+"""
+Configuration for {{AGENT_NAME}} RAG Assistant
+Domain: {{DOMAIN}}
+"""
+import os
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    # Agent configuration
+    AGENT_NAME: str = "{{AGENT_NAME}}"
+    DOMAIN: str = "{{DOMAIN}}"
+
+    # OpenAI configuration
+    OPENAI_API_KEY: str = ""
+    MODEL_NAME: str = "gpt-4o-mini"
+
+    # Vector Store configuration
+    VECTOR_STORE_ID: str = "{{VECTOR_STORE_ID}}"
+    MAX_RESULTS: int = {{MAX_RESULTS}}
+    INCLUDE_CITATIONS: bool = {{INCLUDE_CITATIONS}}
+
+    # Server configuration
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+
+    # Session configuration
+    SESSION_DB_PATH: str = "./sessions.db"
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+settings = Settings()

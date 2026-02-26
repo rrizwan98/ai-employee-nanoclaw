@@ -1,0 +1,51 @@
+/**
+ * Site-wide constants
+ */
+
+export const SITE_CONFIG = {
+  name: '{{project_title}}',
+  company: '{{company_name}}',
+  description: '{{description}}',
+  url: 'https://{{project_name}}.com',
+  ogImage: '/og-image.png',
+  links: {
+    twitter: 'https://twitter.com/{{project_name}}',
+    github: 'https://github.com/{{project_name}}',
+  },
+};
+
+export const NAV_ITEMS = [
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
+];
+
+export const FOOTER_LINKS = {
+  company: [
+    { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' },
+    { label: 'Careers', href: '/careers' },
+  ],
+  legal: [
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+  ],
+  social: [
+    { icon: 'twitter', href: 'https://twitter.com/', label: 'Twitter' },
+    { icon: 'github', href: 'https://github.com/', label: 'GitHub' },
+    { icon: 'linkedin', href: 'https://linkedin.com/', label: 'LinkedIn' },
+  ],
+};
+
+export const CONTACT_INFO = {
+  email: '{{contact_email}}',
+  phone: '{{contact_phone}}',
+  address: '{{contact_address}}',
+};
+
+export const CHATKIT_CONFIG = {
+  apiUrl: '{{backend_url}}',
+  domainKey: '{{domain_key}}',
+  greeting: '{{chat_greeting}}',
+  placeholder: '{{chat_placeholder}}',
+};

@@ -1,0 +1,35 @@
+"""
+Configuration for {{COMPANY_NAME}} Customer Support
+"""
+import os
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    # Company configuration
+    COMPANY_NAME: str = "{{COMPANY_NAME}}"
+    DOMAIN: str = "{{DOMAIN}}"
+
+    # OpenAI configuration
+    OPENAI_API_KEY: str = ""
+
+    # Server configuration
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+
+    # Session configuration
+    SESSION_DB_PATH: str = "./sessions.db"
+
+    # Agent customization
+    BILLING_INSTRUCTIONS: str = "{{BILLING_INSTRUCTIONS}}"
+    TECHNICAL_INSTRUCTIONS: str = "{{TECHNICAL_INSTRUCTIONS}}"
+    GENERAL_INSTRUCTIONS: str = "{{GENERAL_INSTRUCTIONS}}"
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+settings = Settings()

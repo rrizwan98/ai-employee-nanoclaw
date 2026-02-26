@@ -1,0 +1,121 @@
+"""
+{{COMPANY_NAME}} Support Ticket Tools
+Tools for creating and managing support tickets.
+"""
+from agents import function_tool
+from datetime import datetime
+import hashlib
+
+
+@function_tool
+async def create_ticket(
+    customer_id: str,
+    issue_type: str,
+    description: str,
+    priority: str = "normal"
+) -> str:
+    """
+    Create a support ticket for tracking.
+
+    Args:
+        customer_id: Customer identifier
+        issue_type: Type of issue (billing, technical, general)
+        description: Description of the issue
+        priority: Priority level (low, normal, high, urgent)
+
+    Returns:
+        Confirmation message with ticket ID
+    """
+    # Generate ticket ID
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    hash_input = f"{customer_id}{description}{timestamp}"
+    ticket_hash = hashlib.md5(hash_input.encode()).hexdigest()[:6].upper()
+    ticket_id = f"TKT-{ticket_hash}"
+
+    # In production, this would integrate with a ticket system
+    # For now, we simulate ticket creation
+
+    return f"""Ticket created successfully!
+
+**Ticket ID**: {ticket_id}
+**Type**: {issue_type}
+**Priority**: {priority}
+**Status**: Open
+
+Your ticket has been logged and will be addressed according to priority.
+Reference this ticket ID for any follow-up communications."""
+
+
+@function_tool
+async def escalate_issue(
+    ticket_id: str,
+    reason: str,
+    urgency: str = "high"
+) -> str:
+    """
+    Escalate a ticket to a human supervisor.
+
+    Args:
+        ticket_id: The ticket ID to escalate
+        reason: Reason for escalation
+        urgency: Urgency level (high, critical)
+
+    Returns:
+        Confirmation of escalation
+    """
+    return f"""Issue escalated to supervisor.
+
+**Ticket**: {ticket_id}
+**Urgency**: {urgency}
+**Reason**: {reason}
+
+A supervisor will review this ticket and contact you within:
+- High urgency: 4 hours
+- Critical urgency: 1 hour
+
+You will receive an update via your preferred contact method."""
+
+
+@function_tool
+async def check_ticket_status(
+    ticket_id: str
+) -> str:
+    """
+    Check the status of an existing ticket.
+
+    Args:
+        ticket_id: The ticket ID to check
+
+    Returns:
+        Current ticket status
+    """
+    # In production, this would query the ticket system
+    return f"""**Ticket Status**: {ticket_id}
+
+**Status**: In Progress
+**Last Updated**: Just now
+**Assigned To**: Support Team
+
+Your ticket is being actively worked on. You'll receive an update
+when there's progress or if we need additional information."""
+
+
+@function_tool
+async def add_ticket_note(
+    ticket_id: str,
+    note: str
+) -> str:
+    """
+    Add a note to an existing ticket.
+
+    Args:
+        ticket_id: The ticket ID
+        note: Note to add
+
+    Returns:
+        Confirmation of note added
+    """
+    return f"""Note added to ticket {ticket_id}.
+
+Your additional information has been recorded and will be reviewed
+by the support team handling your case."""

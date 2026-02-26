@@ -1,0 +1,50 @@
+import ContactSection from '@/components/sections/ContactSection';
+import FAQ from '@/components/sections/FAQ';
+
+export default function ContactPage() {
+  return (
+    <>
+      <section className="py-12 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
+              Contact Us
+            </h1>
+            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+              Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <ContactSection
+        title="Get in Touch"
+        subtitle="Contact"
+        description="Fill out the form below and our team will get back to you within 24 hours."
+      />
+
+      <FAQ
+        title="Frequently Asked Questions"
+        subtitle="FAQ"
+        items={[
+          {
+            question: 'What are your business hours?',
+            answer: 'We are available Monday through Friday, 9 AM to 6 PM. Our AI assistant is available 24/7 to answer your questions.',
+          },
+          {
+            question: 'How quickly do you respond to inquiries?',
+            answer: 'We typically respond to all inquiries within 24 hours during business days.',
+          },
+          {
+            question: 'Do you offer support in multiple languages?',
+            answer: 'Yes, we offer support in English and several other languages. Please mention your preferred language in your message.',
+          },
+          {
+            question: 'Can I schedule a call with your team?',
+            answer: 'We offer free consultation calls. Please fill out the contact form and mention that you would like to schedule a call.',
+          },
+        ]}
+      />
+    </>
+  );
+}

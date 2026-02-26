@@ -1,0 +1,256 @@
+"""
+{{SYSTEM_NAME}} - Task Scheduler
+Optional cron-based task scheduling support.
+"""
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from models.task_models import ScheduledTask
+from agents.planner import plan_task
+from agents.executor import execute_step
+from agents.verifier import verify_execution
+from config import settings
+from typing import Dict, List, Optional
+import logging
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+
+# Global scheduler instance
+scheduler = AsyncIOScheduler()
+
+# In-memory storage for scheduled tasks (replace with database in production)
+scheduled_tasks: Dict[str, ScheduledTask] = {}
+
+
+async def execute_scheduled_task(schedule_id: str):
+    """
+    Execute a scheduled task.
+
+    Args:
+        schedule_id: ID of the scheduled task
+    """
+    if schedule_id not in scheduled_tasks:
+        logger.error(f"Scheduled task {schedule_id} not found")
+        return
+
+    task = scheduled_tasks[schedule_id]
+
+    if not task.enabled:
+        logger.info(f"Scheduled task {schedule_id} is disabled, skipping")
+        return
+
+    try:
+        logger.info(f"Executing scheduled task: {schedule_id}")
+
+        # Update last run time
+        task.last_run = datetime.utcnow()
+
+        # Plan the task
+        task_plan = await plan_task(task.task_description, context=task.context)
+
+        # Execute all steps
+        execution_results = []
+        for step in task_plan.steps:
+            result = await execute_step(step, context=task.context)
+            execution_results.append(result)
+
+            if result.status == "failed" and not step.allow_failure:
+                logger.error(f"Critical step failed in scheduled task {schedule_id}, stopping execution")
+                break
+
+        # Verify execution
+        verification = await verify_execution(task_plan, execution_results, context=task.context)
+
+        if verification.passed:
+            logger.info(f"Scheduled task {schedule_id} completed successfully")
+        else:
+            logger.warning(f"Scheduled task {schedule_id} failed verification: {verification.issues}")
+
+    except Exception as e:
+        logger.error(f"Error executing scheduled task {schedule_id}: {e}", exc_info=True)
+
+
+def create_schedule(
+    schedule_id: str,
+    task_description: str,
+    cron_expression: str,
+    context: Optional[Dict] = None,
+    enabled: bool = True
+) -> ScheduledTask:
+    """
+    Create a new scheduled task.
+
+    Args:
+        schedule_id: Unique identifier for the schedule
+        task_description: Description of the task to execute
+        cron_expression: Cron expression (e.g., "0 9 * * *" for daily at 9am)
+        context: Optional execution context
+        enabled: Whether the schedule is active
+
+    Returns:
+        ScheduledTask object
+    """
+    if schedule_id in scheduled_tasks:
+        raise ValueError(f"Schedule {schedule_id} already exists")
+
+    task = ScheduledTask(
+        schedule_id=schedule_id,
+        task_description=task_description,
+        cron_expression=cron_expression,
+        enabled=enabled,
+        context=context or {}
+    )
+
+    scheduled_tasks[schedule_id] = task
+
+    if enabled:
+        # Add job to scheduler
+        scheduler.add_job(
+            execute_scheduled_task,
+            CronTrigger.from_crontab(cron_expression),
+            args=[schedule_id],
+            id=schedule_id,
+            replace_existing=True
+        )
+        logger.info(f"Created schedule {schedule_id}: {cron_expression}")
+
+    return task
+
+
+def update_schedule(
+    schedule_id: str,
+    task_description: Optional[str] = None,
+    cron_expression: Optional[str] = None,
+    context: Optional[Dict] = None,
+    enabled: Optional[bool] = None
+) -> ScheduledTask:
+    """
+    Update an existing scheduled task.
+
+    Args:
+        schedule_id: Schedule identifier
+        task_description: New task description
+        cron_expression: New cron expression
+        context: New execution context
+        enabled: New enabled status
+
+    Returns:
+        Updated ScheduledTask object
+    """
+    if schedule_id not in scheduled_tasks:
+        raise ValueError(f"Schedule {schedule_id} not found")
+
+    task = scheduled_tasks[schedule_id]
+
+    if task_description is not None:
+        task.task_description = task_description
+
+    if context is not None:
+        task.context = context
+
+    if cron_expression is not None:
+        task.cron_expression = cron_expression
+        # Update scheduler job
+        if task.enabled:
+            scheduler.reschedule_job(
+                schedule_id,
+                trigger=CronTrigger.from_crontab(cron_expression)
+            )
+
+    if enabled is not None:
+        task.enabled = enabled
+        if enabled:
+            # Enable the job
+            if scheduler.get_job(schedule_id):
+                scheduler.resume_job(schedule_id)
+            else:
+                scheduler.add_job(
+                    execute_scheduled_task,
+                    CronTrigger.from_crontab(task.cron_expression),
+                    args=[schedule_id],
+                    id=schedule_id
+                )
+        else:
+            # Disable the job
+            if scheduler.get_job(schedule_id):
+                scheduler.pause_job(schedule_id)
+
+    logger.info(f"Updated schedule {schedule_id}")
+    return task
+
+
+def delete_schedule(schedule_id: str) -> bool:
+    """
+    Delete a scheduled task.
+
+    Args:
+        schedule_id: Schedule identifier
+
+    Returns:
+        True if deleted, False if not found
+    """
+    if schedule_id not in scheduled_tasks:
+        return False
+
+    # Remove from scheduler
+    if scheduler.get_job(schedule_id):
+        scheduler.remove_job(schedule_id)
+
+    # Remove from storage
+    del scheduled_tasks[schedule_id]
+
+    logger.info(f"Deleted schedule {schedule_id}")
+    return True
+
+
+def get_schedule(schedule_id: str) -> Optional[ScheduledTask]:
+    """
+    Get a scheduled task by ID.
+
+    Args:
+        schedule_id: Schedule identifier
+
+    Returns:
+        ScheduledTask object or None if not found
+    """
+    return scheduled_tasks.get(schedule_id)
+
+
+def list_schedules(enabled_only: bool = False) -> List[ScheduledTask]:
+    """
+    List all scheduled tasks.
+
+    Args:
+        enabled_only: If True, only return enabled schedules
+
+    Returns:
+        List of ScheduledTask objects
+    """
+    tasks = list(scheduled_tasks.values())
+
+    if enabled_only:
+        tasks = [t for t in tasks if t.enabled]
+
+    return tasks
+
+
+def start_scheduler():
+    """Start the task scheduler."""
+    if not scheduler.running:
+        scheduler.start()
+        logger.info("Task scheduler started")
+
+
+def stop_scheduler():
+    """Stop the task scheduler."""
+    if scheduler.running:
+        scheduler.shutdown()
+        logger.info("Task scheduler stopped")
+
+
+# Only enable scheduler if configured
+if {{ENABLE_SCHEDULER}}:
+    logger.info("Task scheduling is enabled")
+else:
+    logger.info("Task scheduling is disabled")

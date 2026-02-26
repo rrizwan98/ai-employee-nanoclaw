@@ -1,0 +1,128 @@
+"""
+Document Management Tools for {{AGENT_NAME}}
+Utilities for uploading and managing documents in the vector store.
+"""
+import os
+from typing import List, Optional
+from openai import OpenAI
+from pathlib import Path
+
+
+class DocumentManager:
+    """Manages document uploads and vector store operations."""
+
+    def __init__(self, api_key: Optional[str] = None):
+        """Initialize document manager with OpenAI client."""
+        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+
+    def upload_file(self, file_path: str, purpose: str = "assistants") -> str:
+        """
+        Upload a file to OpenAI.
+
+        Args:
+            file_path: Path to the file to upload
+            purpose: Purpose of the file (default: "assistants")
+
+        Returns:
+            File ID from OpenAI
+        """
+        with open(file_path, "rb") as file:
+            response = self.client.files.create(
+                file=file,
+                purpose=purpose
+            )
+        return response.id
+
+    def upload_to_vector_store(
+        self,
+        vector_store_id: str,
+        file_paths: List[str]
+    ) -> List[str]:
+        """
+        Upload multiple files to a vector store.
+
+        Args:
+            vector_store_id: ID of the vector store
+            file_paths: List of file paths to upload
+
+        Returns:
+            List of file IDs uploaded
+        """
+        file_ids = []
+
+        for file_path in file_paths:
+            # Upload file to OpenAI
+            file_id = self.upload_file(file_path)
+            file_ids.append(file_id)
+
+            # Add to vector store
+            self.client.beta.vector_stores.files.create(
+                vector_store_id=vector_store_id,
+                file_id=file_id
+            )
+
+            print(f"Uploaded {file_path} -> {file_id}")
+
+        return file_ids
+
+    def list_vector_store_files(self, vector_store_id: str) -> List[dict]:
+        """
+        List all files in a vector store.
+
+        Args:
+            vector_store_id: ID of the vector store
+
+        Returns:
+            List of file metadata dictionaries
+        """
+        files = self.client.beta.vector_stores.files.list(
+            vector_store_id=vector_store_id
+        )
+        return [
+            {
+                "id": f.id,
+                "status": f.status,
+                "created_at": f.created_at
+            }
+            for f in files.data
+        ]
+
+    def delete_file_from_vector_store(
+        self,
+        vector_store_id: str,
+        file_id: str
+    ) -> bool:
+        """
+        Remove a file from a vector store.
+
+        Args:
+            vector_store_id: ID of the vector store
+            file_id: ID of the file to remove
+
+        Returns:
+            True if successful
+        """
+        self.client.beta.vector_stores.files.delete(
+            vector_store_id=vector_store_id,
+            file_id=file_id
+        )
+        return True
+
+    def get_vector_store_info(self, vector_store_id: str) -> dict:
+        """
+        Get information about a vector store.
+
+        Args:
+            vector_store_id: ID of the vector store
+
+        Returns:
+            Dictionary with vector store metadata
+        """
+        store = self.client.beta.vector_stores.retrieve(vector_store_id)
+        return {
+            "id": store.id,
+            "name": store.name,
+            "file_counts": store.file_counts,
+            "status": store.status,
+            "created_at": store.created_at
+        }

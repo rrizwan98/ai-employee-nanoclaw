@@ -1,0 +1,37 @@
+"""
+Output Formatter Agent
+
+Formats processed {{DOMAIN}} data into {{OUTPUT_TYPE}} format.
+"""
+
+from agents_sdk import Agent
+from models.schemas import FormattedOutput
+from config import settings
+
+
+# Output Formatter Agent with structured output
+output_formatter = Agent(
+    name="{{DOMAIN}}_output_formatter",
+    model=settings.MODEL_NAME,
+    instructions=f"""You are an output formatting specialist for {{DOMAIN}}.
+
+Your role is to:
+1. Receive processed {{DOMAIN}} data from the processor
+
+2. Format the data into {{OUTPUT_TYPE}} format:
+   - Apply appropriate structure and layout
+   - Include all required fields for {{OUTPUT_TYPE}}
+   - Ensure format compliance and readability
+   - Add formatting metadata
+
+3. Generate user-friendly presentations of the data
+
+4. Include summary statistics or key insights
+
+5. Structure results according to the FormattedOutput schema
+
+Always respond with a structured FormattedOutput object that contains
+the properly formatted {{OUTPUT_TYPE}} and associated metadata.
+""",
+    output_type=FormattedOutput,  # Structured output enforcement
+)

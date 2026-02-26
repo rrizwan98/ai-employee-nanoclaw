@@ -1,0 +1,69 @@
+"""
+{{SYSTEM_NAME}} - Configuration
+Settings and environment variables.
+"""
+
+from pydantic_settings import BaseSettings
+from typing import List
+import os
+
+
+class Settings(BaseSettings):
+    """Application settings."""
+
+    # System Info
+    SYSTEM_NAME: str = "{{SYSTEM_NAME}}"
+    DOMAIN: str = "{{DOMAIN}}"
+
+    # API Keys
+    OPENAI_API_KEY: str
+    ANTHROPIC_API_KEY: str = ""  # Optional, for Claude integration
+
+    # OpenAI Configuration
+    OPENAI_MODEL: str = "gpt-4o-2024-08-06"  # Model with structured outputs support
+
+    # Task Execution
+    MAX_RETRIES: int = {{MAX_RETRIES}}
+    TASK_TYPES: List[str] = {{TASK_TYPES}}
+
+    # Scheduler
+    ENABLE_SCHEDULER: bool = {{ENABLE_SCHEDULER}}
+
+    # Server Configuration
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    DEBUG: bool = False
+
+    # CORS
+    CORS_ORIGINS: List[str] = ["*"]
+
+    # Logging
+    LOG_LEVEL: str = "INFO"
+
+    # Database (if needed)
+    DATABASE_URL: str = ""
+
+    # File Storage
+    STORAGE_PATH: str = "./storage"
+
+    # Notification Settings
+    EMAIL_SMTP_HOST: str = ""
+    EMAIL_SMTP_PORT: int = 587
+    EMAIL_FROM: str = ""
+    EMAIL_USERNAME: str = ""
+    EMAIL_PASSWORD: str = ""
+
+    SLACK_WEBHOOK_URL: str = ""
+
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_FROM_NUMBER: str = ""
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        case_sensitive = True
+
+
+# Global settings instance
+settings = Settings()

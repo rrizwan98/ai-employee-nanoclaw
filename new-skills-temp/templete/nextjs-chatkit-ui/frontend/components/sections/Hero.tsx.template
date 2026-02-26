@@ -1,0 +1,137 @@
+import Button from '@/components/ui/Button';
+import Link from 'next/link';
+import Image from 'next/image';
+
+interface HeroProps {
+  variant?: 'centered' | 'split' | 'background';
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  primaryCTA?: { text: string; href: string };
+  secondaryCTA?: { text: string; href: string };
+  image?: string;
+  backgroundImage?: string;
+}
+
+export default function Hero({
+  variant = 'centered',
+  title = '{{hero_title}}',
+  subtitle = '{{hero_subtitle}}',
+  description = '{{description}}',
+  primaryCTA = { text: '{{hero_cta_text}}', href: '/contact' },
+  secondaryCTA = { text: 'Learn More', href: '/about' },
+  image,
+  backgroundImage,
+}: HeroProps) {
+  if (variant === 'centered') {
+    return (
+      <section className="relative py-20 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            {subtitle && (
+              <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary-600">
+                {subtitle}
+              </p>
+            )}
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
+              {title}
+            </h1>
+            <p className="mt-6 text-lg text-gray-600 dark:text-gray-300">{description}</p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              {primaryCTA && (
+                <Link href={primaryCTA.href}>
+                  <Button size="lg">{primaryCTA.text}</Button>
+                </Link>
+              )}
+              {secondaryCTA && (
+                <Link href={secondaryCTA.href}>
+                  <Button variant="outline" size="lg">{secondaryCTA.text}</Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (variant === 'split') {
+    return (
+      <section className="relative py-20 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              {subtitle && (
+                <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary-600">
+                  {subtitle}
+                </p>
+              )}
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
+                {title}
+              </h1>
+              <p className="mt-6 text-lg text-gray-600 dark:text-gray-300">{description}</p>
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+                {primaryCTA && (
+                  <Link href={primaryCTA.href}>
+                    <Button size="lg">{primaryCTA.text}</Button>
+                  </Link>
+                )}
+                {secondaryCTA && (
+                  <Link href={secondaryCTA.href}>
+                    <Button variant="outline" size="lg">{secondaryCTA.text}</Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+            {image && (
+              <div className="relative aspect-square overflow-hidden rounded-2xl">
+                <Image src={image} alt={title} fill className="object-cover" />
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Background variant
+  return (
+    <section
+      className="relative py-32 lg:py-48"
+      style={{
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          {subtitle && (
+            <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary-400">
+              {subtitle}
+            </p>
+          )}
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            {title}
+          </h1>
+          <p className="mt-6 text-lg text-gray-200">{description}</p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            {primaryCTA && (
+              <Link href={primaryCTA.href}>
+                <Button size="lg">{primaryCTA.text}</Button>
+              </Link>
+            )}
+            {secondaryCTA && (
+              <Link href={secondaryCTA.href}>
+                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
+                  {secondaryCTA.text}
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

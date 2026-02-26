@@ -1,0 +1,344 @@
+# {{SYSTEM_NAME}}
+
+Multi-agent system for {{DOMAIN}} using OpenAI Agents SDK with agent-as-tool pattern.
+
+## Architecture
+
+This system uses a **orchestrator-specialist** architecture where:
+
+- **{{ORCHESTRATOR_NAME}}** (Orchestrator): Central coordinator that analyzes requests and delegates to specialists
+- **Specialist Agents**: Domain-specific agents that handle specialized tasks
+- **Shared Context**: Thread-safe state management for coordination
+- **Agent-as-Tool Pattern**: Specialists are exposed as tools to the orchestrator
+
+```
+┌─────────────────────────────────────────┐
+│         {{ORCHESTRATOR_NAME}}           │
+│         (Orchestrator Agent)            │
+│                                         │
+│  Analyzes → Delegates → Synthesizes    │
+└──────────────┬──────────────────────────┘
+               │
+               │ Uses specialists as tools
+               │
+     ┌─────────┴─────────┐
+     ↓                   ↓
+┌─────────┐         ┌─────────┐
+│Specialist│   ...   │Specialist│
+│Agent 1   │         │Agent N   │
+└─────────┘         └─────────┘
+     │                   │
+     └─────────┬─────────┘
+               ↓
+     ┌──────────────────┐
+     │  Shared Context  │
+     │  (RunContext)    │
+     └──────────────────┘
+```
+
+## Specialist Agents
+
+{{#each SPECIALIST_NAMES}}
+### {{this}}_agent
+[Describe the role and capabilities of the {{this}} agent]
+
+{{/each}}
+
+## Setup
+
+### 1. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+cp .env.example .env
+```
+
+Required configuration:
+- `OPENAI_API_KEY`: Your OpenAI API key
+- `SYSTEM_NAME`: {{SYSTEM_NAME}}
+- `DOMAIN`: {{DOMAIN}}
+- Specialist instructions for each agent
+
+### 3. Run the System
+
+```bash
+python main.py
+```
+
+The server will start on `http://0.0.0.0:8000`
+
+## API Endpoints
+
+### POST /chat
+Send a message to the multi-agent system.
+
+**Request:**
+```json
+{
+  "message": "Your request here",
+  "session_id": "optional-session-id",
+  "user_id": "optional-user-id",
+  "metadata": {}
+}
+```
+
+**Response:**
+```json
+{
+  "response": "System response",
+  "session_id": "session-123",
+  "agent": "agent-name",
+  "tasks_created": []
+}
+```
+
+### WS /ws/{session_id}
+WebSocket connection for real-time chat.
+
+**Connect:**
+```javascript
+const ws = new WebSocket('ws://localhost:8000/ws/my-session');
+ws.send('Your message here');
+```
+
+### GET /status
+Get system status and statistics.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "system_name": "{{SYSTEM_NAME}}",
+  "domain": "{{DOMAIN}}",
+  "orchestrator": "{{ORCHESTRATOR_NAME}}",
+  "specialists": [{{#each SPECIALIST_NAMES}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}],
+  "active_sessions": 5,
+  "total_tasks": 42
+}
+```
+
+### GET /tasks?status=pending
+Get all tasks, optionally filtered by status.
+
+### GET /activity?limit=50
+Get recent activity log.
+
+### GET /health
+Health check endpoint.
+
+## Docker Deployment
+
+### Build Image
+
+```bash
+docker build -t {{SYSTEM_NAME}}:latest .
+```
+
+### Run Container
+
+```bash
+docker run -d \
+  --name {{SYSTEM_NAME}} \
+  -p 8000:8000 \
+  -e OPENAI_API_KEY=your-key \
+  -v $(pwd)/data:/app/data \
+  {{SYSTEM_NAME}}:latest
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  {{SYSTEM_NAME}}:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+```
+
+## Usage Examples
+
+### Simple Request (Single Specialist)
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Simple task for one specialist",
+    "session_id": "demo"
+  }'
+```
+
+The orchestrator will:
+1. Analyze the request
+2. Delegate to the appropriate specialist
+3. Return the specialist's response
+
+### Complex Request (Multiple Specialists)
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Complex task requiring multiple specialists",
+    "session_id": "demo"
+  }'
+```
+
+The orchestrator will:
+1. Break down the task
+2. Delegate to multiple specialists in sequence
+3. Synthesize their responses
+4. Return a coherent answer
+
+### WebSocket Example
+
+```javascript
+const ws = new WebSocket('ws://localhost:8000/ws/my-session');
+
+ws.onopen = () => {
+  ws.send('Hello, multi-agent system!');
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Agent:', data.agent);
+  console.log('Response:', data.response);
+};
+```
+
+## Customization
+
+### Adding a New Specialist
+
+1. Copy `agents/specialists/specialist.py.template` to a new file:
+   ```bash
+   cp agents/specialists/specialist.py.template agents/specialists/my_specialist.py
+   ```
+
+2. Customize the agent:
+   ```python
+   my_specialist_agent = Agent(
+       name="My Specialist",
+       instructions="...",
+       functions=[...],
+       context=shared_context,
+   )
+   ```
+
+3. Export in `agents/specialists/__init__.py`:
+   ```python
+   from .my_specialist import my_specialist_agent
+   __all__ = [..., "my_specialist_agent"]
+   ```
+
+4. Add to orchestrator in `agents/orchestrator.py`:
+   ```python
+   @function_tool
+   async def use_my_specialist_agent(task: str) -> str:
+       # Implementation
+   ```
+
+5. Update configuration in `config.py` and `.env`
+
+### Adding Custom Tools
+
+Add tools in `tools/shared_tools.py`:
+
+```python
+@function_tool
+def my_custom_tool(input: str) -> str:
+    """
+    Description of what this tool does.
+
+    Args:
+        input: Description of input
+
+    Returns:
+        Description of output
+    """
+    # Implementation
+    return result
+```
+
+### Modifying Shared Context
+
+Extend `SharedContext` in `context/shared_context.py`:
+
+```python
+class SharedContext:
+    def my_custom_method(self, param):
+        # Custom state management logic
+        pass
+```
+
+## Monitoring
+
+### Activity Log
+
+```bash
+curl http://localhost:8000/activity?limit=20
+```
+
+### Task Status
+
+```bash
+curl http://localhost:8000/tasks?status=completed
+```
+
+### System Status
+
+```bash
+curl http://localhost:8000/status
+```
+
+## Troubleshooting
+
+### Agent Not Responding
+- Check OpenAI API key in `.env`
+- Verify network connectivity
+- Check logs for errors
+
+### Context Not Persisting
+- Ensure shared_context is imported correctly
+- Verify RunContextWrapper is being used
+- Check session database path
+
+### Specialists Not Being Called
+- Verify specialist is exported in `__init__.py`
+- Check orchestrator has the specialist as a tool
+- Review orchestrator instructions
+
+## Best Practices
+
+1. **Clear Specialist Roles**: Define clear, non-overlapping responsibilities
+2. **Orchestrator Logic**: Keep orchestrator focused on delegation, not execution
+3. **Shared Context**: Use for coordination, not as primary data store
+4. **Tool Naming**: Use descriptive names like `use_data_analyst_agent`
+5. **Error Handling**: Handle specialist failures gracefully in orchestrator
+6. **Task Tracking**: Log all significant actions to shared context
+7. **Testing**: Test each specialist independently before integration
+
+## License
+
+Generated by AI Employee using OpenAI Agents SDK
+
+## Support
+
+For issues or questions, refer to:
+- OpenAI Agents SDK documentation
+- This system's configuration in `config.py`
+- Agent definitions in `agents/` directory

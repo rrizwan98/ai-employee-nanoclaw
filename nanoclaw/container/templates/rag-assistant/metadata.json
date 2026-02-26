@@ -1,0 +1,88 @@
+{
+  "name": "rag-assistant",
+  "display_name": "RAG Assistant",
+  "description": "Document search and Q&A agent using OpenAI File Search with vector stores",
+  "version": "1.0.0",
+  "author": "AI Employee",
+  "category": "knowledge",
+  "tags": ["rag", "search", "documents", "qa", "vector-store", "file-search"],
+  "variables": {
+    "AGENT_NAME": {
+      "description": "Name of the RAG assistant",
+      "type": "string",
+      "default": "DocumentAssistant",
+      "required": true
+    },
+    "DOMAIN": {
+      "description": "Domain or topic area of the knowledge base",
+      "type": "string",
+      "default": "General Knowledge",
+      "required": true
+    },
+    "VECTOR_STORE_ID": {
+      "description": "OpenAI vector store ID (created via setup_vectorstore.py)",
+      "type": "string",
+      "default": "vs_xxxxxxxxxxxxxxxxxxxxxx",
+      "required": true
+    },
+    "MAX_RESULTS": {
+      "description": "Maximum number of search results to retrieve",
+      "type": "number",
+      "default": 10,
+      "required": false
+    },
+    "INCLUDE_CITATIONS": {
+      "description": "Include source citations in responses",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    }
+  },
+  "features": [
+    "Semantic document search using vector embeddings",
+    "OpenAI File Search Tool integration",
+    "Multi-format document support (PDF, TXT, DOCX, MD, JSON, CSV, XML)",
+    "Dynamic document upload via API",
+    "Conversational context with session management",
+    "Optional citation support for transparency",
+    "RESTful API with FastAPI",
+    "Docker container deployment",
+    "Vector store management tools"
+  ],
+  "requirements": {
+    "openai_api_key": true,
+    "vector_store": true,
+    "documents": true
+  },
+  "setup_steps": [
+    "Install dependencies: pip install -r requirements.txt",
+    "Set OPENAI_API_KEY in .env",
+    "Create vector store: python setup_vectorstore.py --name 'Knowledge Base' --docs ./documents/",
+    "Add VECTOR_STORE_ID to .env",
+    "Run server: python main.py"
+  ],
+  "endpoints": {
+    "POST /chat": "Send messages to the RAG agent",
+    "POST /upload": "Upload documents to vector store",
+    "GET /documents": "List all documents in vector store",
+    "GET /vectorstore": "Get vector store information",
+    "GET /health": "Health check"
+  },
+  "use_cases": [
+    "Customer support knowledge base",
+    "Internal documentation search",
+    "Research assistant",
+    "Legal document analysis",
+    "Educational content Q&A",
+    "Product documentation helper"
+  ],
+  "technologies": [
+    "OpenAI Agents SDK",
+    "OpenAI File Search Tool",
+    "Vector Stores (OpenAI)",
+    "FastAPI",
+    "Python 3.11+",
+    "SQLite (session storage)",
+    "Docker"
+  ]
+}

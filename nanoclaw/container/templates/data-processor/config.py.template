@@ -1,0 +1,43 @@
+"""
+Configuration Settings for {{DOMAIN}} Data Processor
+
+Loads settings from environment variables with sensible defaults.
+"""
+
+from pydantic_settings import BaseSettings
+from typing import List
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment"""
+
+    # OpenAI Configuration
+    OPENAI_API_KEY: str
+    MODEL_NAME: str = "gpt-4o-2024-08-06"
+
+    # Server Configuration
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    LOG_LEVEL: str = "INFO"
+
+    # CORS Configuration
+    CORS_ORIGINS: List[str] = ["*"]
+
+    # Domain Configuration
+    DOMAIN: str = "{{DOMAIN}}"
+    INPUT_TYPE: str = "{{INPUT_TYPE}}"
+    OUTPUT_TYPE: str = "{{OUTPUT_TYPE}}"
+    VALIDATION_RULES: str = "{{VALIDATION_RULES}}"
+
+    # Processing Configuration
+    MAX_RETRIES: int = 3
+    TIMEOUT_SECONDS: int = 30
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        case_sensitive = True
+
+
+# Global settings instance
+settings = Settings()

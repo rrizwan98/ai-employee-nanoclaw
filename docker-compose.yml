@@ -1,0 +1,48 @@
+# Agent Builder AI Employee - Docker Compose
+# Phase 1 Foundation Setup
+
+version: '3.8'
+
+services:
+  nanoclaw:
+    build:
+      context: ./nanoclaw
+      dockerfile: container/Dockerfile
+    image: nanoclaw-agent:latest
+    container_name: nanoclaw-agent
+    restart: unless-stopped
+
+    environment:
+      - ASSISTANT_NAME=${ASSISTANT_NAME:-AgentBuilder}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - CONTAINER_TIMEOUT=${CONTAINER_TIMEOUT:-300000}
+      - TZ=${TZ:-Asia/Karachi}
+
+    volumes:
+      # WhatsApp auth state persistence
+      - ./nanoclaw/store:/workspace/store
+      # Per-group memory
+      - ./nanoclaw/groups:/workspace/groups
+      # Persistent data
+      - ./nanoclaw/data:/workspace/data
+      # Logs
+      - ./nanoclaw/logs:/workspace/logs
+
+    # For development: expose ports if needed
+    # ports:
+    #   - "3000:3000"
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Volumes for data persistence
+volumes:
+  nanoclaw_store:
+  nanoclaw_groups:
+  nanoclaw_data:

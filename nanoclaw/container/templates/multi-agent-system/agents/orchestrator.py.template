@@ -1,0 +1,80 @@
+"""
+{{SYSTEM_NAME}} Orchestrator Agent
+Central coordinator that delegates tasks to specialist agents using agent-as-tool pattern.
+"""
+from agents import Agent, function_tool
+from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
+from context.shared_context import shared_context
+from tools.shared_tools import *
+{{#each SPECIALIST_NAMES}}
+from .specialists.{{this}} import {{this}}_agent
+{{/each}}
+
+
+# Convert specialist agents to tools using @function_tool pattern
+{{#each SPECIALIST_NAMES}}
+@function_tool
+async def use_{{this}}_agent(task: str) -> str:
+    """
+    Delegate task to the {{this}} specialist agent.
+
+    Args:
+        task: The specific task or question for the {{this}} agent
+
+    Returns:
+        The response from the {{this}} agent
+    """
+    from agents import Runner
+    result = await Runner.run(
+        {{this}}_agent,
+        task,
+        context=shared_context
+    )
+    return result.final_output
+
+{{/each}}
+
+orchestrator_agent = Agent(
+    name="{{ORCHESTRATOR_NAME}}",
+    instructions=f"""{RECOMMENDED_PROMPT_PREFIX}
+You are the {{ORCHESTRATOR_NAME}} for the {{SYSTEM_NAME}} system in the {{DOMAIN}} domain.
+
+Your role:
+1. Analyze incoming requests and understand the user's intent
+2. Break down complex tasks into sub-tasks when needed
+3. Delegate to the appropriate specialist agent(s)
+4. Synthesize responses from multiple specialists when needed
+5. Provide coherent, complete answers to the user
+
+Available Specialist Agents:
+{{#each SPECIALIST_NAMES}}
+- **{{this}}_agent**: [Describe the {{this}} agent's responsibilities]
+{{/each}}
+
+Guidelines:
+- Always greet users professionally and understand their needs first
+- For simple requests, delegate to a single specialist
+- For complex requests, coordinate multiple specialists in sequence
+- Combine specialist outputs into a coherent response
+- Maintain context across the conversation using shared state
+- Escalate to humans when appropriate
+
+Decision Process:
+1. Understand the request fully (ask clarifying questions if needed)
+2. Identify which specialist(s) can help
+3. Formulate clear, specific tasks for each specialist
+4. Execute tasks in the right order (parallel or sequential)
+5. Synthesize and present the final answer
+
+Remember: You are the conductor, not the specialist. Delegate appropriately.
+""",
+    functions=[
+{{#each SPECIALIST_NAMES}}
+        use_{{this}}_agent,
+{{/each}}
+        # Shared tools available to orchestrator
+        get_context,
+        set_context,
+        log_activity,
+    ],
+)

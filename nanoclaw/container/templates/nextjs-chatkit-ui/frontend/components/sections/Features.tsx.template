@@ -1,0 +1,95 @@
+import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+
+interface Feature {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+interface FeaturesProps {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  features?: Feature[];
+  columns?: 2 | 3 | 4;
+}
+
+const defaultFeatures: Feature[] = [
+  {
+    icon: (
+      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+    title: 'Lightning Fast',
+    description: 'Optimized for speed and performance to deliver the best user experience.',
+  },
+  {
+    icon: (
+      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+    ),
+    title: 'Secure by Default',
+    description: 'Enterprise-grade security to keep your data safe and protected.',
+  },
+  {
+    icon: (
+      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    ),
+    title: 'Always Updated',
+    description: 'Regular updates and improvements to keep you ahead of the curve.',
+  },
+];
+
+export default function Features({
+  title = 'Why Choose Us',
+  subtitle = 'Features',
+  description = 'Everything you need to build amazing products.',
+  features = defaultFeatures,
+  columns = 3,
+}: FeaturesProps) {
+  const gridCols = {
+    2: 'lg:grid-cols-2',
+    3: 'lg:grid-cols-3',
+    4: 'lg:grid-cols-4',
+  };
+
+  return (
+    <section className="py-20 lg:py-32 bg-gray-50 dark:bg-gray-800/50">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          {subtitle && (
+            <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary-600">
+              {subtitle}
+            </p>
+          )}
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+            {title}
+          </h2>
+          {description && (
+            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">{description}</p>
+          )}
+        </div>
+
+        <div className={`mt-16 grid gap-8 sm:grid-cols-2 ${gridCols[columns]}`}>
+          {features.map((feature, index) => (
+            <Card key={index} variant="bordered">
+              <CardHeader>
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600">
+                  {feature.icon}
+                </div>
+                <CardTitle>{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{feature.description}</CardDescription>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

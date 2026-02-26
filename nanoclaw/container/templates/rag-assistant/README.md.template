@@ -1,0 +1,452 @@
+# {{AGENT_NAME}} - RAG Assistant
+
+AI-powered document search and question-answering system for **{{DOMAIN}}** using OpenAI Agents SDK and vector search.
+
+## Overview
+
+This RAG (Retrieval-Augmented Generation) assistant combines:
+- **Vector Search**: Semantic search across your document collection
+- **OpenAI Agents SDK**: Intelligent conversation handling
+- **File Search Tool**: Built-in document retrieval with citations
+- **FastAPI**: RESTful API for chat and document management
+
+## Features
+
+- 📚 **Document Search**: Semantic search across uploaded documents
+- 💬 **Conversational AI**: Context-aware responses with memory
+- 📤 **Document Upload**: Add new documents to the knowledge base
+- 🔍 **Citation Support**: {{#INCLUDE_CITATIONS}}Include source references in answers{{/INCLUDE_CITATIONS}}{{^INCLUDE_CITATIONS}}Concise answers without citations{{/INCLUDE_CITATIONS}}
+- 🔌 **REST API**: Easy integration with any client
+
+## Quick Start
+
+### 1. Prerequisites
+
+- Python 3.11+
+- OpenAI API key with access to Assistants API
+- Documents to add to the knowledge base
+
+### 2. Installation
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Copy environment template
+cp .env.example .env
+```
+
+### 3. Set Up Vector Store
+
+The vector store is where your documents are indexed for search. You must create it before using the assistant.
+
+```bash
+# Set your OpenAI API key
+export OPENAI_API_KEY=your-api-key-here
+
+# Create vector store and upload documents
+python setup_vectorstore.py --name "{{AGENT_NAME}} Knowledge Base" --docs ./documents/
+
+# This will output a VECTOR_STORE_ID - add it to your .env file
+```
+
+**Important**: Copy the `VECTOR_STORE_ID` from the output and add it to your `.env` file:
+
+```env
+VECTOR_STORE_ID=vs_xxxxxxxxxxxxxxxxxxxxx
+```
+
+### 4. Configure Environment
+
+Edit `.env` with your settings:
+
+```env
+OPENAI_API_KEY=your-openai-api-key-here
+AGENT_NAME={{AGENT_NAME}}
+DOMAIN={{DOMAIN}}
+VECTOR_STORE_ID=vs_xxxxxxxxxxxxxxxxxxxxx
+MAX_RESULTS={{MAX_RESULTS}}
+INCLUDE_CITATIONS={{INCLUDE_CITATIONS}}
+```
+
+### 5. Run the Assistant
+
+```bash
+# Start the server
+python main.py
+
+# Or with uvicorn directly
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+The API will be available at `http://localhost:8000`
+
+## Vector Store Management
+
+### Create a New Vector Store
+
+```bash
+python setup_vectorstore.py --name "My Knowledge Base" --docs ./documents/
+```
+
+This will:
+1. Create a new vector store
+2. Upload all supported documents from the specified directory
+3. Output the `VECTOR_STORE_ID` to add to your `.env`
+
+### List All Vector Stores
+
+```bash
+python setup_vectorstore.py --list
+```
+
+### View Vector Store Details
+
+```bash
+python setup_vectorstore.py --info vs_xxxxxxxxxxxxxxxxxxxxx
+```
+
+### Supported Document Formats
+
+- Text files (`.txt`, `.md`)
+- PDF documents (`.pdf`)
+- Word documents (`.doc`, `.docx`)
+- Structured data (`.json`, `.csv`, `.xml`)
+
+## API Usage
+
+### Chat Endpoint
+
+Send a message to the RAG assistant:
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What are the main features?",
+    "session_id": "user123"
+  }'
+```
+
+Response:
+```json
+{
+  "response": "Based on the documentation, the main features are...",
+  "session_id": "user123",
+  "sources": null
+}
+```
+
+### Upload Document
+
+Add a new document to the knowledge base:
+
+```bash
+curl -X POST http://localhost:8000/upload \
+  -F "file=@document.pdf"
+```
+
+Response:
+```json
+{
+  "success": true,
+  "file_id": "file-xxxxxxxxxxxxxxxxxxxxx",
+  "message": "Successfully uploaded document.pdf to knowledge base"
+}
+```
+
+### List Documents
+
+View all documents in the vector store:
+
+```bash
+curl http://localhost:8000/documents
+```
+
+### Vector Store Info
+
+Get information about the vector store:
+
+```bash
+curl http://localhost:8000/vectorstore
+```
+
+## Configuration Options
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AGENT_NAME` | Name of your assistant | {{AGENT_NAME}} |
+| `DOMAIN` | Domain/topic area | {{DOMAIN}} |
+| `VECTOR_STORE_ID` | OpenAI vector store ID | (required) |
+| `MAX_RESULTS` | Max search results to retrieve | {{MAX_RESULTS}} |
+| `INCLUDE_CITATIONS` | Include source citations | {{INCLUDE_CITATIONS}} |
+| `MODEL_NAME` | OpenAI model to use | gpt-4o-mini |
+
+## Docker Deployment
+
+### Build Image
+
+```bash
+docker build -t {{AGENT_NAME}}-rag:latest .
+```
+
+### Run Container
+
+```bash
+docker run -d \
+  --name {{AGENT_NAME}}-rag \
+  -p 8000:8000 \
+  -e OPENAI_API_KEY=your-key \
+  -e VECTOR_STORE_ID=vs_xxxxxx \
+  -v $(pwd)/data:/app/data \
+  {{AGENT_NAME}}-rag:latest
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  rag-assistant:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - VECTOR_STORE_ID=${VECTOR_STORE_ID}
+    volumes:
+      - ./data:/app/data
+      - ./documents:/app/documents
+```
+
+## How It Works
+
+### Architecture
+
+```
+User Query
+    ↓
+FastAPI Endpoint
+    ↓
+RAG Agent (OpenAI Agents SDK)
+    ↓
+File Search Tool
+    ↓
+Vector Store (OpenAI)
+    ↓
+Retrieve Top {{MAX_RESULTS}} Results
+    ↓
+Generate Answer with Context
+    ↓
+Return Response{{#INCLUDE_CITATIONS}} + Citations{{/INCLUDE_CITATIONS}}
+```
+
+### File Search Tool
+
+The `FileSearchTool` is configured with:
+
+```python
+file_search = FileSearchTool(
+    vector_store_ids=[settings.VECTOR_STORE_ID],
+    max_num_results=settings.MAX_RESULTS,
+    include_search_results=settings.INCLUDE_CITATIONS
+)
+```
+
+- **vector_store_ids**: List of vector stores to search
+- **max_num_results**: Maximum number of relevant chunks to retrieve
+- **include_search_results**: Whether to include source citations
+
+### Session Management
+
+Conversations are persisted using `SQLiteSession`:
+- Each `session_id` maintains conversation history
+- Context is preserved across multiple turns
+- Sessions are stored in `./sessions.db`
+
+## Best Practices
+
+### Document Preparation
+
+1. **Clean Text**: Remove unnecessary formatting
+2. **Structured Content**: Use headings and sections
+3. **Chunk Size**: Keep documents reasonably sized (< 10MB)
+4. **Format**: Prefer text-based formats (PDF, TXT, MD)
+
+### Search Optimization
+
+1. **MAX_RESULTS**: Start with 5-10 results
+2. **Citations**: Enable for transparency, disable for concise responses
+3. **Model Selection**: Use `gpt-4o` for complex queries, `gpt-4o-mini` for simple ones
+
+### Production Deployment
+
+1. **Authentication**: Add API key authentication
+2. **Rate Limiting**: Implement request throttling
+3. **Monitoring**: Track search quality and response times
+4. **Backup**: Regularly backup your vector store IDs and metadata
+
+## Troubleshooting
+
+### Vector Store Not Found
+
+```
+Error: Vector store vs_xxxxxx not found
+```
+
+**Solution**: Run `setup_vectorstore.py` to create a vector store and add the ID to `.env`
+
+### No Documents Found
+
+```
+Error: No supported documents found in ./documents/
+```
+
+**Solution**: Add supported files (.txt, .pdf, .docx, .md, .json, .csv, .xml) to the documents directory
+
+### File Upload Failed
+
+```
+Error: Unsupported file type
+```
+
+**Solution**: Only upload supported document formats (see Supported Document Formats section)
+
+### Empty Responses
+
+**Possible causes**:
+- Vector store is empty
+- Query doesn't match document content
+- MAX_RESULTS is too low
+
+**Solution**:
+1. Verify documents are uploaded: `curl http://localhost:8000/documents`
+2. Check vector store: `python setup_vectorstore.py --info $VECTOR_STORE_ID`
+3. Increase MAX_RESULTS in `.env`
+
+## API Reference
+
+### POST /chat
+
+Process a message through the RAG agent.
+
+**Request**:
+```json
+{
+  "message": "string",
+  "session_id": "string" (optional, default: "default")
+}
+```
+
+**Response**:
+```json
+{
+  "response": "string",
+  "session_id": "string",
+  "sources": [...]  (if INCLUDE_CITATIONS=true)
+}
+```
+
+### POST /upload
+
+Upload a document to the knowledge base.
+
+**Request**: Multipart form data with `file` field
+
+**Response**:
+```json
+{
+  "success": true,
+  "file_id": "file-xxxxx",
+  "message": "Successfully uploaded filename to knowledge base"
+}
+```
+
+### GET /documents
+
+List all documents in the vector store.
+
+**Response**:
+```json
+{
+  "vector_store_id": "vs_xxxxx",
+  "total_files": 10,
+  "files": [
+    {
+      "id": "file-xxxxx",
+      "status": "completed",
+      "created_at": 1234567890
+    }
+  ]
+}
+```
+
+### GET /vectorstore
+
+Get vector store information.
+
+**Response**:
+```json
+{
+  "id": "vs_xxxxx",
+  "name": "Knowledge Base",
+  "file_counts": {"total": 10},
+  "status": "ready",
+  "created_at": 1234567890
+}
+```
+
+### GET /health
+
+Health check endpoint.
+
+**Response**:
+```json
+{
+  "status": "healthy",
+  "agent": "{{AGENT_NAME}}",
+  "domain": "{{DOMAIN}}",
+  "vector_store_id": "vs_xxxxx",
+  "max_results": {{MAX_RESULTS}},
+  "include_citations": {{INCLUDE_CITATIONS}}
+}
+```
+
+## Example Use Cases
+
+### Customer Support Knowledge Base
+
+Upload product documentation, FAQs, and support articles to answer customer questions automatically.
+
+### Internal Documentation Search
+
+Index company wikis, policies, and procedures for employees to quickly find information.
+
+### Research Assistant
+
+Upload research papers, articles, and notes to get AI-powered summaries and answers.
+
+### Legal Document Analysis
+
+Index contracts, case law, and regulations to assist with legal research.
+
+## Contributing
+
+This agent was generated by the AI Employee using OpenAI Agents SDK. To customize:
+
+1. Edit `agents/rag_agent.py.template` for agent behavior
+2. Modify `tools/document_tools.py.template` for document management
+3. Update `main.py.template` for API endpoints
+4. Adjust `config.py.template` for configuration options
+
+## License
+
+Generated by AI Employee for {{DOMAIN}}.
+
+## Support
+
+For issues or questions:
+1. Check the Troubleshooting section
+2. Review OpenAI Agents SDK documentation
+3. Verify your OpenAI API key has Assistants API access
+4. Ensure VECTOR_STORE_ID is correctly set in `.env`

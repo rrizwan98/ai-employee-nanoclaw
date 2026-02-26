@@ -1,0 +1,33 @@
+import Hero from '@/components/sections/Hero';
+import Features from '@/components/sections/Features';
+import Testimonials from '@/components/sections/Testimonials';
+import CTA from '@/components/sections/CTA';
+
+export default function Home() {
+  return (
+    <>
+      <Hero
+        variant="centered"
+        title="{{hero_title}}"
+        subtitle="{{hero_subtitle}}"
+        description="{{description}}"
+        primaryCTA={{ text: '{{hero_cta_text}}', href: '/contact' }}
+        secondaryCTA={{ text: 'Learn More', href: '/about' }}
+      />
+      <Features
+        title="Why Choose Us"
+        subtitle="Features"
+        description="Everything you need to succeed."
+      />
+      <Testimonials
+        title="What Our Customers Say"
+        subtitle="Testimonials"
+      />
+      <CTA
+        title="Ready to Get Started?"
+        description="Join thousands of satisfied customers using our platform."
+        variant="gradient"
+      />
+    </>
+  );
+}

@@ -1,0 +1,410 @@
+"""
+{{SYSTEM_NAME}} - Execution Tools
+Tools available to the executor agent for task execution.
+"""
+
+from typing import List, Dict, Any, Optional
+import httpx
+import json
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+
+# Tool function definitions for OpenAI Agents SDK
+
+async def api_call(
+    method: str,
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    body: Optional[Dict[str, Any]] = None,
+    timeout: int = 30
+) -> Dict[str, Any]:
+    """
+    Make an HTTP API call.
+
+    Args:
+        method: HTTP method (GET, POST, PUT, DELETE, PATCH)
+        url: Target URL
+        headers: Optional HTTP headers
+        params: Optional query parameters
+        body: Optional request body (for POST/PUT/PATCH)
+        timeout: Request timeout in seconds
+
+    Returns:
+        Dict with status, headers, and response data
+    """
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.request(
+                method=method.upper(),
+                url=url,
+                headers=headers,
+                params=params,
+                json=body
+            )
+
+            return {
+                "status_code": response.status_code,
+                "headers": dict(response.headers),
+                "data": response.json() if response.headers.get("content-type", "").startswith("application/json") else response.text,
+                "success": response.is_success
+            }
+    except Exception as e:
+        logger.error(f"API call failed: {e}")
+        return {
+            "status_code": 0,
+            "error": str(e),
+            "success": False
+        }
+
+
+async def read_file(file_path: str, encoding: str = "utf-8") -> Dict[str, Any]:
+    """
+    Read contents of a file.
+
+    Args:
+        file_path: Path to the file
+        encoding: File encoding (default: utf-8)
+
+    Returns:
+        Dict with file content or error
+    """
+    try:
+        path = Path(file_path)
+        if not path.exists():
+            return {"success": False, "error": f"File not found: {file_path}"}
+
+        content = path.read_text(encoding=encoding)
+        return {
+            "success": True,
+            "content": content,
+            "size_bytes": path.stat().st_size,
+            "path": str(path.absolute())
+        }
+    except Exception as e:
+        logger.error(f"File read failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+async def write_file(
+    file_path: str,
+    content: str,
+    encoding: str = "utf-8",
+    create_dirs: bool = True
+) -> Dict[str, Any]:
+    """
+    Write content to a file.
+
+    Args:
+        file_path: Path to the file
+        content: Content to write
+        encoding: File encoding (default: utf-8)
+        create_dirs: Whether to create parent directories
+
+    Returns:
+        Dict with success status
+    """
+    try:
+        path = Path(file_path)
+
+        if create_dirs:
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+        path.write_text(content, encoding=encoding)
+
+        return {
+            "success": True,
+            "path": str(path.absolute()),
+            "size_bytes": path.stat().st_size
+        }
+    except Exception as e:
+        logger.error(f"File write failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+async def transform_data(
+    input_data: Any,
+    transformation: str,
+    options: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Transform data using specified transformation.
+
+    Args:
+        input_data: Data to transform
+        transformation: Transformation type (e.g., 'json_to_csv', 'filter', 'map', 'aggregate')
+        options: Transformation-specific options
+
+    Returns:
+        Dict with transformed data
+    """
+    try:
+        options = options or {}
+
+        if transformation == "json_to_csv":
+            import csv
+            import io
+
+            output = io.StringIO()
+            if isinstance(input_data, list) and len(input_data) > 0:
+                writer = csv.DictWriter(output, fieldnames=input_data[0].keys())
+                writer.writeheader()
+                writer.writerows(input_data)
+                return {"success": True, "output": output.getvalue(), "format": "csv"}
+
+        elif transformation == "filter":
+            field = options.get("field")
+            value = options.get("value")
+            if isinstance(input_data, list):
+                filtered = [item for item in input_data if item.get(field) == value]
+                return {"success": True, "output": filtered, "count": len(filtered)}
+
+        elif transformation == "map":
+            field = options.get("field")
+            if isinstance(input_data, list):
+                mapped = [item.get(field) for item in input_data if field in item]
+                return {"success": True, "output": mapped, "count": len(mapped)}
+
+        elif transformation == "aggregate":
+            field = options.get("field")
+            operation = options.get("operation", "sum")  # sum, avg, min, max, count
+            if isinstance(input_data, list):
+                values = [item.get(field, 0) for item in input_data if field in item]
+                if operation == "sum":
+                    result = sum(values)
+                elif operation == "avg":
+                    result = sum(values) / len(values) if values else 0
+                elif operation == "min":
+                    result = min(values) if values else None
+                elif operation == "max":
+                    result = max(values) if values else None
+                elif operation == "count":
+                    result = len(values)
+                else:
+                    return {"success": False, "error": f"Unknown operation: {operation}"}
+
+                return {"success": True, "output": result, "operation": operation}
+
+        return {"success": False, "error": f"Unknown transformation: {transformation}"}
+
+    except Exception as e:
+        logger.error(f"Data transformation failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+async def send_notification(
+    channel: str,
+    message: str,
+    recipients: List[str],
+    priority: str = "normal",
+    metadata: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Send a notification through specified channel.
+
+    Args:
+        channel: Notification channel (email, slack, webhook, sms)
+        message: Notification message
+        recipients: List of recipient identifiers
+        priority: Notification priority (low, normal, high, urgent)
+        metadata: Additional metadata
+
+    Returns:
+        Dict with delivery status
+    """
+    try:
+        # This is a placeholder - implement actual notification logic
+        logger.info(f"Sending {priority} notification via {channel} to {recipients}")
+        logger.info(f"Message: {message}")
+
+        # TODO: Implement actual notification sending based on channel
+        # - Email: use SMTP or email service API
+        # - Slack: use Slack webhook or API
+        # - Webhook: POST to webhook URL
+        # - SMS: use Twilio or similar service
+
+        return {
+            "success": True,
+            "channel": channel,
+            "recipients": recipients,
+            "sent_at": "2024-01-01T00:00:00Z",  # Use actual timestamp
+            "message_id": "placeholder-id"  # Use actual message ID
+        }
+
+    except Exception as e:
+        logger.error(f"Notification failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# Tool definitions for OpenAI Agents SDK
+def get_execution_tools() -> List[Dict[str, Any]]:
+    """
+    Get tool definitions for the executor agent.
+
+    Returns:
+        List of tool definitions in OpenAI format
+    """
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": "api_call",
+                "description": "Make an HTTP API call to an external service",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "method": {
+                            "type": "string",
+                            "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+                            "description": "HTTP method"
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "Target URL"
+                        },
+                        "headers": {
+                            "type": "object",
+                            "description": "HTTP headers"
+                        },
+                        "params": {
+                            "type": "object",
+                            "description": "Query parameters"
+                        },
+                        "body": {
+                            "type": "object",
+                            "description": "Request body"
+                        },
+                        "timeout": {
+                            "type": "integer",
+                            "description": "Request timeout in seconds",
+                            "default": 30
+                        }
+                    },
+                    "required": ["method", "url"]
+                }
+            },
+            "callable": api_call
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "read_file",
+                "description": "Read contents of a file from the filesystem",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "file_path": {
+                            "type": "string",
+                            "description": "Path to the file"
+                        },
+                        "encoding": {
+                            "type": "string",
+                            "description": "File encoding",
+                            "default": "utf-8"
+                        }
+                    },
+                    "required": ["file_path"]
+                }
+            },
+            "callable": read_file
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "write_file",
+                "description": "Write content to a file on the filesystem",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "file_path": {
+                            "type": "string",
+                            "description": "Path to the file"
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "Content to write"
+                        },
+                        "encoding": {
+                            "type": "string",
+                            "description": "File encoding",
+                            "default": "utf-8"
+                        },
+                        "create_dirs": {
+                            "type": "boolean",
+                            "description": "Create parent directories if needed",
+                            "default": True
+                        }
+                    },
+                    "required": ["file_path", "content"]
+                }
+            },
+            "callable": write_file
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "transform_data",
+                "description": "Transform data using specified transformation type",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input_data": {
+                            "description": "Data to transform"
+                        },
+                        "transformation": {
+                            "type": "string",
+                            "enum": ["json_to_csv", "filter", "map", "aggregate"],
+                            "description": "Type of transformation"
+                        },
+                        "options": {
+                            "type": "object",
+                            "description": "Transformation-specific options"
+                        }
+                    },
+                    "required": ["input_data", "transformation"]
+                }
+            },
+            "callable": transform_data
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "send_notification",
+                "description": "Send a notification through specified channel",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "channel": {
+                            "type": "string",
+                            "enum": ["email", "slack", "webhook", "sms"],
+                            "description": "Notification channel"
+                        },
+                        "message": {
+                            "type": "string",
+                            "description": "Notification message"
+                        },
+                        "recipients": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of recipients"
+                        },
+                        "priority": {
+                            "type": "string",
+                            "enum": ["low", "normal", "high", "urgent"],
+                            "description": "Notification priority",
+                            "default": "normal"
+                        },
+                        "metadata": {
+                            "type": "object",
+                            "description": "Additional metadata"
+                        }
+                    },
+                    "required": ["channel", "message", "recipients"]
+                }
+            },
+            "callable": send_notification
+        }
+    ]

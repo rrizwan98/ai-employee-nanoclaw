@@ -1,0 +1,13 @@
+"""
+{{SYSTEM_NAME}} Multi-Agent System
+Orchestrator with specialist agents using agent-as-tool pattern.
+"""
+from .orchestrator import orchestrator_agent
+from .specialists import *
+
+__all__ = [
+    "orchestrator_agent",
+{{#each SPECIALIST_NAMES}}
+    "{{this}}_agent",
+{{/each}}
+]

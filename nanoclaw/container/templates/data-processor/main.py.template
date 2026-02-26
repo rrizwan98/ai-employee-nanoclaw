@@ -1,0 +1,230 @@
+"""
+{{DOMAIN}} Data Processing Pipeline
+
+FastAPI server with three-agent pipeline:
+1. Input Validator → ValidatedInput
+2. Processor → ProcessedData
+3. Output Formatter → FormattedOutput
+
+Code-based orchestration with structured outputs using output_type.
+"""
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+import time
+import logging
+from typing import Dict, Any
+
+from agents import input_validator, processor, output_formatter
+from models.schemas import (
+    PipelineRequest,
+    PipelineResponse,
+    ValidatedInput,
+    ProcessedData,
+    FormattedOutput,
+)
+from config import settings
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Initialize FastAPI app
+app = FastAPI(
+    title=f"{{{{DOMAIN}}}} Data Processor",
+    description="Three-agent pipeline for processing {{INPUT_TYPE}} into {{OUTPUT_TYPE}}",
+    version="1.0.0",
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "{{DOMAIN}} Data Processor",
+        "agents": ["input_validator", "processor", "output_formatter"],
+    }
+
+
+@app.get("/health")
+async def health():
+    """Detailed health check"""
+    return {
+        "status": "healthy",
+        "domain": "{{DOMAIN}}",
+        "input_type": "{{INPUT_TYPE}}",
+        "output_type": "{{OUTPUT_TYPE}}",
+        "validation_rules": "{{VALIDATION_RULES}}",
+        "model": settings.MODEL_NAME,
+    }
+
+
+@app.post("/process", response_model=PipelineResponse)
+async def process_data(request: PipelineRequest) -> PipelineResponse:
+    """
+    Process {{INPUT_TYPE}} data through the three-agent pipeline.
+
+    Pipeline stages:
+    1. Input Validator: Validates and structures {{INPUT_TYPE}}
+    2. Processor: Processes validated data with {{DOMAIN}} logic
+    3. Output Formatter: Formats into {{OUTPUT_TYPE}}
+
+    Returns structured results from all stages with metadata.
+    """
+    start_time = time.time()
+    errors = []
+
+    try:
+        logger.info(f"Starting pipeline for {{DOMAIN}} data processing")
+
+        # Stage 1: Input Validation
+        logger.info("Stage 1: Input Validation")
+        validation_start = time.time()
+
+        validation_result: ValidatedInput = await input_validator.run(
+            input_data=request.input_data,
+            options=request.options,
+        )
+
+        validation_duration = (time.time() - validation_start) * 1000
+        logger.info(f"Validation completed in {validation_duration:.2f}ms")
+
+        # Check validation status
+        if not validation_result.is_valid:
+            logger.warning(f"Validation failed: {validation_result.errors}")
+            return PipelineResponse(
+                success=False,
+                validation_result=validation_result,
+                pipeline_duration_ms=(time.time() - start_time) * 1000,
+                errors=validation_result.errors,
+                metadata={
+                    "stage_failed": "validation",
+                    "validation_duration_ms": validation_duration,
+                }
+            )
+
+        # Stage 2: Processing
+        logger.info("Stage 2: Data Processing")
+        processing_start = time.time()
+
+        processing_result: ProcessedData = await processor.run(
+            validated_data=validation_result.model_dump(),
+            options=request.options,
+        )
+
+        processing_duration = (time.time() - processing_start) * 1000
+        logger.info(f"Processing completed in {processing_duration:.2f}ms")
+
+        # Check processing status
+        if not processing_result.processing_successful:
+            logger.warning("Processing failed")
+            return PipelineResponse(
+                success=False,
+                validation_result=validation_result,
+                processing_result=processing_result,
+                pipeline_duration_ms=(time.time() - start_time) * 1000,
+                errors=["Processing stage failed"],
+                metadata={
+                    "stage_failed": "processing",
+                    "validation_duration_ms": validation_duration,
+                    "processing_duration_ms": processing_duration,
+                }
+            )
+
+        # Stage 3: Output Formatting
+        logger.info("Stage 3: Output Formatting")
+        formatting_start = time.time()
+
+        formatting_result: FormattedOutput = await output_formatter.run(
+            processed_data=processing_result.model_dump(),
+            output_type="{{OUTPUT_TYPE}}",
+            options=request.options,
+        )
+
+        formatting_duration = (time.time() - formatting_start) * 1000
+        logger.info(f"Formatting completed in {formatting_duration:.2f}ms")
+
+        # Calculate total duration
+        total_duration = (time.time() - start_time) * 1000
+        logger.info(f"Pipeline completed successfully in {total_duration:.2f}ms")
+
+        # Return successful pipeline response
+        return PipelineResponse(
+            success=True,
+            validation_result=validation_result,
+            processing_result=processing_result,
+            formatting_result=formatting_result,
+            pipeline_duration_ms=total_duration,
+            metadata={
+                "validation_duration_ms": validation_duration,
+                "processing_duration_ms": processing_duration,
+                "formatting_duration_ms": formatting_duration,
+                "domain": "{{DOMAIN}}",
+                "input_type": "{{INPUT_TYPE}}",
+                "output_type": "{{OUTPUT_TYPE}}",
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Pipeline error: {str(e)}", exc_info=True)
+        total_duration = (time.time() - start_time) * 1000
+
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "Pipeline execution failed",
+                "message": str(e),
+                "duration_ms": total_duration,
+            }
+        )
+
+
+@app.post("/validate-only", response_model=ValidatedInput)
+async def validate_only(request: PipelineRequest) -> ValidatedInput:
+    """
+    Run only the input validation stage.
+    Useful for testing validation rules independently.
+    """
+    try:
+        logger.info("Running validation-only request")
+
+        validation_result: ValidatedInput = await input_validator.run(
+            input_data=request.input_data,
+            options=request.options,
+        )
+
+        logger.info(f"Validation result: valid={validation_result.is_valid}")
+        return validation_result
+
+    except Exception as e:
+        logger.error(f"Validation error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "Validation failed", "message": str(e)}
+        )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    logger.info(f"Starting {{DOMAIN}} Data Processor on port {settings.PORT}")
+    uvicorn.run(
+        app,
+        host=settings.HOST,
+        port=settings.PORT,
+        log_level=settings.LOG_LEVEL.lower(),
+    )

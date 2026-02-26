@@ -1,0 +1,57 @@
+"""
+Configuration for {{SYSTEM_NAME}}
+Multi-agent system settings and environment variables.
+"""
+import os
+from pydantic_settings import BaseSettings
+from typing import List
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    # System configuration
+    SYSTEM_NAME: str = "{{SYSTEM_NAME}}"
+    DOMAIN: str = "{{DOMAIN}}"
+    ORCHESTRATOR_NAME: str = "{{ORCHESTRATOR_NAME}}"
+
+    # OpenAI configuration
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4"
+
+    # Server configuration
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    CORS_ORIGINS: List[str] = ["*"]
+
+    # Session configuration
+    SESSION_DB_PATH: str = "./sessions.db"
+
+    # Specialist agent configuration
+    SPECIALIST_COUNT: int = {{SPECIALIST_COUNT}}
+    SPECIALIST_NAMES: List[str] = [{{#each SPECIALIST_NAMES}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}]
+
+    # Agent customization
+{{#each SPECIALIST_NAMES}}
+    {{upper this}}_INSTRUCTIONS: str = "Specialist agent for {{this}} tasks in the {{../DOMAIN}} domain."
+{{/each}}
+
+    # Context configuration
+    MAX_CONTEXT_HISTORY: int = 100
+    MAX_TASK_HISTORY: int = 1000
+    MAX_ACTIVITY_LOG: int = 500
+
+    # Logging configuration
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+    # Performance configuration
+    AGENT_TIMEOUT: int = 300  # seconds
+    MAX_CONCURRENT_SESSIONS: int = 100
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+settings = Settings()

@@ -1,0 +1,34 @@
+"""
+Configuration for {{AGENT_NAME}}
+"""
+import os
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    # Agent configuration
+    AGENT_NAME: str = "{{AGENT_NAME}}"
+    DOMAIN: str = "{{DOMAIN}}"
+
+    # Feature flags
+    USE_MEMORY: bool = {{USE_MEMORY}}
+    USE_WEB_SEARCH: bool = {{USE_WEB_SEARCH}}
+
+    # OpenAI configuration
+    OPENAI_API_KEY: str = ""
+
+    # Server configuration
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+
+    # Session configuration
+    SESSION_DB_PATH: str = "./sessions.db"
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+settings = Settings()

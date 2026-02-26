@@ -1,0 +1,117 @@
+"""
+{{SYSTEM_NAME}} - Executor Agent
+Executes planned task steps using available tools.
+"""
+
+from openai import OpenAI
+from models.task_models import TaskStep, ExecutionResult
+from tools.execution_tools import get_execution_tools
+from config import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+executor_agent = client.beta.agents.create(
+    name="{{SYSTEM_NAME}}_Executor",
+    instructions="""You are a precise task executor for {{DOMAIN}}.
+
+Your role is to:
+1. Execute task steps exactly as planned
+2. Use the available tools correctly and safely
+3. Handle errors gracefully with retries
+4. Log all actions for auditability
+5. Preserve state between steps
+
+Available capabilities:
+- API calls (GET, POST, PUT, DELETE)
+- File operations (read, write, process)
+- Data transformations
+- External service integrations
+- Notification delivery
+
+Guidelines:
+- Validate inputs before execution
+- Use idempotent operations when possible
+- Implement exponential backoff for retries
+- Never skip error checking
+- Return detailed execution results
+- Respect rate limits and quotas
+
+Always prioritize data safety and consistency.""",
+    model=settings.OPENAI_MODEL,
+    tools=get_execution_tools(),
+    temperature=0.1,  # Very low temperature for deterministic execution
+)
+
+
+async def execute_step(step: TaskStep, context: dict = None) -> ExecutionResult:
+    """
+    Execute a single task step.
+
+    Args:
+        step: TaskStep to execute
+        context: Execution context (state, credentials, etc.)
+
+    Returns:
+        ExecutionResult with status and output
+    """
+    retry_count = 0
+    max_retries = {{MAX_RETRIES}}
+    last_error = None
+
+    while retry_count <= max_retries:
+        try:
+            logger.info(f"Executing step: {step.name} (attempt {retry_count + 1}/{max_retries + 1})")
+
+            context_str = ""
+            if context:
+                context_str = f"\n\nContext:\n{context}"
+
+            response = client.beta.agents.run(
+                agent=executor_agent,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"""Execute this step:
+
+Step Name: {step.name}
+Description: {step.description}
+Action: {step.action}
+Parameters: {step.parameters}
+Expected Output: {step.expected_output}{context_str}
+
+Execute the step and return the result."""
+                    }
+                ]
+            )
+
+            # Process the response
+            result = ExecutionResult(
+                step_id=step.step_id,
+                status="completed",
+                output=response.messages[-1].content,
+                retry_count=retry_count
+            )
+
+            logger.info(f"Step {step.name} completed successfully")
+            return result
+
+        except Exception as e:
+            last_error = str(e)
+            logger.error(f"Step {step.name} failed (attempt {retry_count + 1}): {last_error}")
+            retry_count += 1
+
+            if retry_count <= max_retries:
+                import asyncio
+                await asyncio.sleep(2 ** retry_count)  # Exponential backoff
+
+    # All retries exhausted
+    return ExecutionResult(
+        step_id=step.step_id,
+        status="failed",
+        output=None,
+        error=last_error,
+        retry_count=retry_count
+    )

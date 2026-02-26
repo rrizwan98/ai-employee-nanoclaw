@@ -1,0 +1,33 @@
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import ChatProvider from '@/components/chat/ChatProvider';
+
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: '{{project_title}}',
+  description: '{{description}}',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en" className="{{color_scheme}}">
+      <body className={`${inter.className} bg-white dark:bg-gray-950 text-gray-900 dark:text-white`}>
+        <ChatProvider>
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </ChatProvider>
+      </body>
+    </html>
+  );
+}

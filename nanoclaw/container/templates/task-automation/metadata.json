@@ -1,0 +1,34 @@
+{
+  "name": "task-automation",
+  "displayName": "Task Automation",
+  "description": "Planner-executor-verifier pattern for automated workflows",
+  "version": "1.0.0",
+  "agents": ["planner", "executor", "verifier"],
+  "patterns": ["planning", "execution", "verification", "evaluation-loop"],
+  "sdkFeatures": ["output_type", "guardrails", "function_tool", "OutputGuardrail"],
+  "useCases": ["workflow automation", "scheduled tasks", "batch processing", "task management"],
+  "keywords": ["automate", "task", "schedule", "batch", "workflow", "planner", "executor", "automation"],
+  "complexity": "complex",
+  "files": [
+    {"path": "main.py", "template": "main.py.template"},
+    {"path": "agents/__init__.py", "template": "agents/__init__.py.template"},
+    {"path": "agents/planner.py", "template": "agents/planner.py.template"},
+    {"path": "agents/executor.py", "template": "agents/executor.py.template"},
+    {"path": "agents/verifier.py", "template": "agents/verifier.py.template"},
+    {"path": "models/task_models.py", "template": "models/task_models.py.template"},
+    {"path": "tools/execution_tools.py", "template": "tools/execution_tools.py.template"},
+    {"path": "scheduler.py", "template": "scheduler.py.template"},
+    {"path": "config.py", "template": "config.py.template"},
+    {"path": "requirements.txt", "template": "requirements.txt"},
+    {"path": ".env.example", "template": ".env.example"},
+    {"path": "Dockerfile", "template": "Dockerfile"},
+    {"path": "README.md", "template": "README.md.template"}
+  ],
+  "variables": [
+    {"name": "SYSTEM_NAME", "description": "Name of the automation system", "required": true},
+    {"name": "DOMAIN", "description": "Automation domain", "required": true},
+    {"name": "MAX_RETRIES", "description": "Maximum retry attempts", "default": "3"},
+    {"name": "ENABLE_SCHEDULER", "description": "Enable cron scheduler", "default": "false"},
+    {"name": "TASK_TYPES", "description": "Comma-separated task types", "default": "api_call,file_operation,notification"}
+  ]
+}

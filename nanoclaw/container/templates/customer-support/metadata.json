@@ -1,0 +1,33 @@
+{
+  "name": "customer-support",
+  "displayName": "Customer Support",
+  "description": "Multi-agent support system with triage and specialist agents",
+  "version": "1.0.0",
+  "agents": ["triage", "billing", "technical", "general"],
+  "patterns": ["handoffs", "triage", "multi-agent"],
+  "sdkFeatures": ["handoffs", "guardrails", "sessions", "function_tool"],
+  "useCases": ["support desk", "helpdesk", "customer service", "ticket system"],
+  "keywords": ["support", "customer", "help", "service", "ticket", "helpdesk", "billing", "technical"],
+  "complexity": "medium",
+  "files": [
+    {"path": "main.py", "template": "main.py.template"},
+    {"path": "agents/__init__.py", "template": "agents/__init__.py.template"},
+    {"path": "agents/triage.py", "template": "agents/triage.py.template"},
+    {"path": "agents/billing.py", "template": "agents/billing.py.template"},
+    {"path": "agents/technical.py", "template": "agents/technical.py.template"},
+    {"path": "agents/general.py", "template": "agents/general.py.template"},
+    {"path": "tools/ticket.py", "template": "tools/ticket.py.template"},
+    {"path": "config.py", "template": "config.py.template"},
+    {"path": "requirements.txt", "template": "requirements.txt"},
+    {"path": ".env.example", "template": ".env.example"},
+    {"path": "Dockerfile", "template": "Dockerfile"},
+    {"path": "README.md", "template": "README.md.template"}
+  ],
+  "variables": [
+    {"name": "DOMAIN", "description": "Client domain/industry", "required": true},
+    {"name": "COMPANY_NAME", "description": "Company name for branding", "required": true},
+    {"name": "BILLING_INSTRUCTIONS", "description": "Custom billing agent instructions", "default": "Handle billing inquiries professionally"},
+    {"name": "TECHNICAL_INSTRUCTIONS", "description": "Custom technical agent instructions", "default": "Provide technical support and troubleshooting"},
+    {"name": "GENERAL_INSTRUCTIONS", "description": "Custom general agent instructions", "default": "Answer general questions about products and policies"}
+  ]
+}

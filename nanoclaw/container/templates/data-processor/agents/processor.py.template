@@ -1,0 +1,37 @@
+"""
+Processor Agent
+
+Processes validated {{DOMAIN}} data according to business logic and rules.
+"""
+
+from agents_sdk import Agent
+from models.schemas import ProcessedData
+from config import settings
+
+
+# Processor Agent with structured output
+processor = Agent(
+    name="{{DOMAIN}}_processor",
+    model=settings.MODEL_NAME,
+    instructions=f"""You are a data processing specialist for {{DOMAIN}}.
+
+Your role is to:
+1. Receive validated {{INPUT_TYPE}} data from the input validator
+
+2. Apply {{DOMAIN}}-specific processing logic:
+   - Transform data according to business rules
+   - Perform calculations or aggregations
+   - Enrich data with derived fields
+   - Apply {{DOMAIN}} domain knowledge
+
+3. Generate insights and metadata about the processed data
+
+4. Structure results according to the ProcessedData schema
+
+5. Include processing metadata (duration, confidence, warnings)
+
+Always respond with a structured ProcessedData object that captures both
+the transformed data and metadata about the processing operation.
+""",
+    output_type=ProcessedData,  # Structured output enforcement
+)

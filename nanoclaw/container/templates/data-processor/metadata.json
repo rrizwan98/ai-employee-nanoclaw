@@ -1,0 +1,32 @@
+{
+  "name": "data-processor",
+  "displayName": "Data Processor",
+  "description": "Pipeline for data validation, processing, and output formatting",
+  "version": "1.0.0",
+  "agents": ["input_validator", "processor", "output_formatter"],
+  "patterns": ["pipeline", "chaining", "structured-output"],
+  "sdkFeatures": ["output_type", "guardrails", "function_tool"],
+  "useCases": ["data entry", "report generation", "ETL pipeline", "data validation"],
+  "keywords": ["data", "process", "etl", "report", "validation", "pipeline", "transform", "extract"],
+  "complexity": "medium",
+  "files": [
+    {"path": "main.py", "template": "main.py.template"},
+    {"path": "agents/__init__.py", "template": "agents/__init__.py.template"},
+    {"path": "agents/input_validator.py", "template": "agents/input_validator.py.template"},
+    {"path": "agents/processor.py", "template": "agents/processor.py.template"},
+    {"path": "agents/output_formatter.py", "template": "agents/output_formatter.py.template"},
+    {"path": "models/schemas.py", "template": "models/schemas.py.template"},
+    {"path": "tools/data_tools.py", "template": "tools/data_tools.py.template"},
+    {"path": "config.py", "template": "config.py.template"},
+    {"path": "requirements.txt", "template": "requirements.txt"},
+    {"path": ".env.example", "template": ".env.example"},
+    {"path": "Dockerfile", "template": "Dockerfile"},
+    {"path": "README.md", "template": "README.md.template"}
+  ],
+  "variables": [
+    {"name": "DOMAIN", "description": "Data domain (e.g., sales, inventory)", "required": true},
+    {"name": "INPUT_TYPE", "description": "Type of input data (e.g., CSV, JSON)", "required": true},
+    {"name": "OUTPUT_TYPE", "description": "Type of output format (e.g., report, JSON)", "required": true},
+    {"name": "VALIDATION_RULES", "description": "Custom validation rules", "default": "Standard validation"}
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "multi-agent-system",
+  "displayName": "Multi-Agent System",
+  "description": "Orchestrator with multiple specialist agents for complex workflows",
+  "version": "1.0.0",
+  "agents": ["orchestrator", "specialist_a", "specialist_b", "specialist_c"],
+  "patterns": ["orchestrator", "agent-as-tool", "multi-agent"],
+  "sdkFeatures": ["function_tool", "output_type", "guardrails", "run_config"],
+  "useCases": ["complex workflows", "enterprise systems", "modular architecture", "parallel processing"],
+  "keywords": ["multi-agent", "complex", "enterprise", "workflow", "orchestrator", "coordinator", "specialist"],
+  "complexity": "complex",
+  "files": [
+    {"path": "main.py", "template": "main.py.template"},
+    {"path": "agents/__init__.py", "template": "agents/__init__.py.template"},
+    {"path": "agents/orchestrator.py", "template": "agents/orchestrator.py.template"},
+    {"path": "agents/specialists/__init__.py", "template": "agents/specialists/__init__.py.template"},
+    {"path": "agents/specialists/specialist.py", "template": "agents/specialists/specialist.py.template"},
+    {"path": "context/shared_context.py", "template": "context/shared_context.py.template"},
+    {"path": "tools/shared_tools.py", "template": "tools/shared_tools.py.template"},
+    {"path": "config.py", "template": "config.py.template"},
+    {"path": "requirements.txt", "template": "requirements.txt"},
+    {"path": ".env.example", "template": ".env.example"},
+    {"path": "Dockerfile", "template": "Dockerfile"},
+    {"path": "README.md", "template": "README.md.template"}
+  ],
+  "variables": [
+    {"name": "SYSTEM_NAME", "description": "Name of the multi-agent system", "required": true},
+    {"name": "DOMAIN", "description": "Business domain", "required": true},
+    {"name": "ORCHESTRATOR_NAME", "description": "Name for orchestrator agent", "default": "Coordinator"},
+    {"name": "SPECIALIST_COUNT", "description": "Number of specialist agents", "default": "3"},
+    {"name": "SPECIALIST_NAMES", "description": "Comma-separated specialist names", "default": "Research,Analysis,Reporting"}
+  ]
+}

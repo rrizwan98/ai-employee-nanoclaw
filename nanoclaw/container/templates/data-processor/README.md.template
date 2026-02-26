@@ -1,0 +1,321 @@
+# {{DOMAIN}} Data Processor
+
+Three-agent pipeline for processing **{{INPUT_TYPE}}** into **{{OUTPUT_TYPE}}** using OpenAI Agents SDK.
+
+## Architecture
+
+This agent uses a **three-agent pipeline** with **structured outputs**:
+
+```
+{{INPUT_TYPE}} → [Input Validator] → ValidatedInput
+                                    ↓
+                              [Processor] → ProcessedData
+                                    ↓
+                        [Output Formatter] → FormattedOutput ({{OUTPUT_TYPE}})
+```
+
+### Agents
+
+1. **Input Validator** (`agents/input_validator.py`)
+   - Validates {{INPUT_TYPE}} against rules: {{VALIDATION_RULES}}
+   - Structures data into `ValidatedInput` schema
+   - Flags errors and warnings
+
+2. **Processor** (`agents/processor.py`)
+   - Processes validated data with {{DOMAIN}} business logic
+   - Generates insights and metrics
+   - Outputs `ProcessedData` schema
+
+3. **Output Formatter** (`agents/output_formatter.py`)
+   - Formats processed data into {{OUTPUT_TYPE}}
+   - Includes summaries and key points
+   - Outputs `FormattedOutput` schema
+
+### Key Features
+
+- **Structured Outputs**: All agents use `output_type` parameter for guaranteed schema compliance
+- **Code-based Orchestration**: FastAPI server chains agents with explicit error handling
+- **Full Metadata**: Each stage includes timestamps, durations, confidence scores
+- **Validation-first**: Pipeline halts on validation failures with detailed error messages
+
+## Setup
+
+### 1. Environment Configuration
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your values
+# Required: OPENAI_API_KEY
+# Optional: Customize DOMAIN, INPUT_TYPE, OUTPUT_TYPE, VALIDATION_RULES
+```
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run Locally
+
+```bash
+# Start the FastAPI server
+python main.py
+
+# Server runs on http://localhost:8000
+# API docs at http://localhost:8000/docs
+```
+
+### 4. Run with Docker
+
+```bash
+# Build container
+docker build -t {{DOMAIN}}-processor .
+
+# Run container
+docker run -p 8000:8000 --env-file .env {{DOMAIN}}-processor
+```
+
+## API Usage
+
+### Process Data (Full Pipeline)
+
+```bash
+curl -X POST http://localhost:8000/process \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input_data": "your {{INPUT_TYPE}} data here",
+    "options": {}
+  }'
+```
+
+**Response Structure:**
+
+```json
+{
+  "success": true,
+  "validation_result": {
+    "is_valid": true,
+    "structured_data": {...},
+    "confidence_score": 0.95,
+    "errors": [],
+    "warnings": []
+  },
+  "processing_result": {
+    "processing_successful": true,
+    "results": {...},
+    "insights": ["insight 1", "insight 2"],
+    "metrics": {"metric1": 0.85}
+  },
+  "formatting_result": {
+    "formatted_data": "{{OUTPUT_TYPE}} formatted output",
+    "summary": "Summary of results",
+    "key_points": ["point 1", "point 2"]
+  },
+  "pipeline_duration_ms": 1234.56,
+  "metadata": {
+    "validation_duration_ms": 234.56,
+    "processing_duration_ms": 567.89,
+    "formatting_duration_ms": 432.11
+  }
+}
+```
+
+### Validate Only
+
+Test validation rules independently:
+
+```bash
+curl -X POST http://localhost:8000/validate-only \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input_data": "your {{INPUT_TYPE}} data here",
+    "options": {}
+  }'
+```
+
+### Health Check
+
+```bash
+curl http://localhost:8000/health
+```
+
+## Customization
+
+### 1. Update Validation Rules
+
+Edit `agents/input_validator.py`:
+
+```python
+instructions=f"""You are an input validation specialist for {{DOMAIN}} data.
+
+Your role is to:
+1. Validate incoming {{INPUT_TYPE}} data against these rules:
+   - Your custom rule 1
+   - Your custom rule 2
+   - Your custom rule 3
+...
+```
+
+### 2. Modify Processing Logic
+
+Edit `agents/processor.py`:
+
+```python
+instructions=f"""You are a data processing specialist for {{DOMAIN}}.
+
+Your role is to:
+1. Receive validated {{INPUT_TYPE}} data from the input validator
+
+2. Apply {{DOMAIN}}-specific processing logic:
+   - Your custom processing step 1
+   - Your custom processing step 2
+...
+```
+
+### 3. Customize Output Format
+
+Edit `agents/output_formatter.py`:
+
+```python
+instructions=f"""You are an output formatting specialist for {{DOMAIN}}.
+
+Your role is to:
+1. Receive processed {{DOMAIN}} data from the processor
+
+2. Format the data into {{OUTPUT_TYPE}} format:
+   - Your custom formatting rule 1
+   - Your custom formatting rule 2
+...
+```
+
+### 4. Extend Schemas
+
+Edit `models/schemas.py` to add domain-specific fields:
+
+```python
+class ValidatedInput(BaseModel):
+    # ... existing fields ...
+
+    # Add your custom fields
+    custom_field_1: str = Field(description="...")
+    custom_field_2: Optional[int] = Field(default=None, description="...")
+```
+
+## Project Structure
+
+```
+data-processor/
+├── agents/
+│   ├── __init__.py          # Agent exports
+│   ├── input_validator.py   # Stage 1: Validation
+│   ├── processor.py         # Stage 2: Processing
+│   └── output_formatter.py  # Stage 3: Formatting
+├── models/
+│   └── schemas.py           # Pydantic schemas
+├── main.py                  # FastAPI server + orchestration
+├── config.py                # Settings configuration
+├── requirements.txt         # Dependencies
+├── .env.example            # Environment template
+├── Dockerfile              # Container configuration
+└── README.md               # This file
+```
+
+## Development
+
+### Running Tests
+
+```bash
+# Install dev dependencies
+pip install pytest httpx
+
+# Run tests
+pytest
+```
+
+### API Documentation
+
+Interactive API docs available at:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+### Logging
+
+Logs are written to stdout with timestamps:
+
+```
+2024-01-15 10:30:45 - __main__ - INFO - Starting pipeline for {{DOMAIN}} data processing
+2024-01-15 10:30:45 - __main__ - INFO - Stage 1: Input Validation
+2024-01-15 10:30:46 - __main__ - INFO - Validation completed in 234.56ms
+2024-01-15 10:30:46 - __main__ - INFO - Stage 2: Data Processing
+...
+```
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | Yes | - | OpenAI API key |
+| `MODEL_NAME` | No | `gpt-4o-2024-08-06` | Model for agents |
+| `HOST` | No | `0.0.0.0` | Server host |
+| `PORT` | No | `8000` | Server port |
+| `LOG_LEVEL` | No | `INFO` | Logging level |
+| `CORS_ORIGINS` | No | `*` | CORS origins |
+| `DOMAIN` | No | `{{DOMAIN}}` | Domain name |
+| `INPUT_TYPE` | No | `{{INPUT_TYPE}}` | Input data type |
+| `OUTPUT_TYPE` | No | `{{OUTPUT_TYPE}}` | Output format type |
+| `VALIDATION_RULES` | No | `{{VALIDATION_RULES}}` | Validation rules |
+| `MAX_RETRIES` | No | `3` | Max retry attempts |
+| `TIMEOUT_SECONDS` | No | `30` | Request timeout |
+
+## Error Handling
+
+The pipeline includes comprehensive error handling:
+
+1. **Validation Failures**: Returns `success=false` with error details
+2. **Processing Failures**: Returns partial results with error context
+3. **Formatting Failures**: Returns processed data without formatting
+4. **Server Errors**: Returns 500 with error message and duration
+
+Example error response:
+
+```json
+{
+  "success": false,
+  "validation_result": {
+    "is_valid": false,
+    "errors": [
+      "Missing required field: customer_id",
+      "Invalid date format: expected ISO 8601"
+    ],
+    "warnings": ["Optional field 'notes' is empty"]
+  },
+  "pipeline_duration_ms": 123.45,
+  "errors": ["Validation stage failed"],
+  "metadata": {
+    "stage_failed": "validation",
+    "validation_duration_ms": 123.45
+  }
+}
+```
+
+## Performance
+
+Typical pipeline timings:
+
+- **Validation**: 100-300ms
+- **Processing**: 200-500ms
+- **Formatting**: 100-300ms
+- **Total**: 400-1100ms
+
+Performance tips:
+
+1. Use `validate-only` endpoint for quick validation checks
+2. Enable response caching for repeated requests
+3. Batch multiple requests when possible
+4. Monitor `pipeline_duration_ms` in responses
+
+## License
+
+MIT License - customize as needed for your project.

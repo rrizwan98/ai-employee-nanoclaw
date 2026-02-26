@@ -1,0 +1,157 @@
+# {{project_title}}
+
+A modern Next.js website with AI chat integration powered by OpenAI ChatKit.
+
+## Features
+
+- **Next.js 14+** - App Router with React Server Components
+- **TypeScript** - Full type safety
+- **Tailwind CSS** - Utility-first styling
+- **OpenAI ChatKit** - AI-powered chat widget
+- **Dark Mode** - Built-in dark/light theme support
+- **Responsive** - Mobile-first design
+- **SEO Optimized** - Meta tags and OpenGraph support
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Backend server running with ChatKit endpoint
+
+### Installation
+
+1. Install dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+2. Configure environment:
+
+```bash
+cp .env.local.example .env.local
+# Edit .env.local with your configuration
+```
+
+3. Start development server:
+
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+frontend/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx          # Root layout
+│   ├── page.tsx            # Home page
+│   ├── globals.css         # Global styles
+│   ├── about/              # About page
+│   └── contact/            # Contact page
+├── components/
+│   ├── ui/                 # UI primitives
+│   │   ├── Button.tsx
+│   │   ├── Card.tsx
+│   │   ├── Input.tsx
+│   │   └── Badge.tsx
+│   ├── layout/             # Layout components
+│   │   ├── Header.tsx
+│   │   └── Footer.tsx
+│   ├── sections/           # Page sections
+│   │   ├── Hero.tsx
+│   │   ├── Features.tsx
+│   │   ├── Pricing.tsx
+│   │   ├── Testimonials.tsx
+│   │   ├── CTA.tsx
+│   │   ├── FAQ.tsx
+│   │   └── ContactSection.tsx
+│   ├── forms/              # Form components
+│   │   ├── ContactForm.tsx
+│   │   └── BookingForm.tsx
+│   └── chat/               # Chat widget
+│       ├── ChatWidget.tsx
+│       └── ChatProvider.tsx
+├── lib/
+│   ├── utils.ts            # Utility functions
+│   └── constants.ts        # Site constants
+├── package.json
+├── tailwind.config.ts
+├── next.config.js
+└── tsconfig.json
+```
+
+## Chat Widget
+
+The AI chat widget is integrated via `ChatProvider` in the root layout. It connects to your ChatKit backend.
+
+### Configuration
+
+Edit `lib/constants.ts` or `.env.local`:
+
+```env
+NEXT_PUBLIC_CHATKIT_API_URL={{backend_url}}
+NEXT_PUBLIC_CHATKIT_DOMAIN_KEY={{domain_key}}
+```
+
+### Customization
+
+Modify `components/chat/ChatWidget.tsx` to:
+- Change button position
+- Update theme colors
+- Add custom prompts
+- Handle client-side tools
+
+## Customization
+
+### Theme
+
+Edit `tailwind.config.ts` to customize:
+- Primary colors
+- Font family
+- Spacing and sizing
+
+### Components
+
+All components are modular and can be:
+- Modified directly
+- Composed with other components
+- Extended with new props
+
+## Deployment
+
+### Vercel (Recommended)
+
+```bash
+npm run build
+vercel deploy
+```
+
+### Docker
+
+```bash
+docker build -t {{project_name}}-frontend .
+docker run -p 3000:3000 {{project_name}}-frontend
+```
+
+## Backend Connection
+
+This frontend requires a ChatKit-compatible backend. See the `backend/` folder for the FastAPI server.
+
+Backend must:
+1. Run on `{{backend_url}}`
+2. Handle ChatKit protocol
+3. Stream responses via SSE
+
+## License
+
+MIT License - See LICENSE file for details.
+
+---
+
+Built with [Next.js](https://nextjs.org) and [OpenAI ChatKit](https://github.com/openai/chatkit-js)

@@ -1,0 +1,45 @@
+"""
+{{AGENT_NAME}} RAG Agent
+Uses OpenAI File Search with vector store for document retrieval.
+Domain: {{DOMAIN}}
+"""
+from agents import Agent
+from agents.extensions.handoffs import Handoffs
+from agents.extensions.tools import FileSearchTool
+from config import settings
+
+
+# Configure File Search Tool with vector store
+file_search = FileSearchTool(
+    vector_store_ids=[settings.VECTOR_STORE_ID],
+    max_num_results=settings.MAX_RESULTS,
+    include_search_results=settings.INCLUDE_CITATIONS
+)
+
+
+# RAG Agent with File Search capability
+rag_agent = Agent(
+    name="{{AGENT_NAME}}",
+    instructions=f"""You are {{AGENT_NAME}}, a specialized RAG (Retrieval-Augmented Generation) assistant for {{DOMAIN}}.
+
+Your capabilities:
+- Search and retrieve information from the knowledge base using vector search
+- Provide accurate answers based on retrieved documents
+- {"Include citations and references to source documents" if settings.INCLUDE_CITATIONS else "Provide answers without citations"}
+- Handle follow-up questions and clarifications
+
+Guidelines:
+- Always search the knowledge base before answering questions
+- Base your answers on the retrieved information
+- If information is not found in the knowledge base, clearly state this
+- Maintain context across conversation turns
+- Be concise but thorough in your responses
+{"- Always cite sources when providing information" if settings.INCLUDE_CITATIONS else ""}
+- If you're unsure or the information is incomplete, ask for clarification
+
+Remember: You have access to a curated knowledge base about {{DOMAIN}}.
+Use the file search tool to find relevant information before responding.
+""",
+    tools=[file_search],
+    model=settings.MODEL_NAME
+)

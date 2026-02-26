@@ -1,0 +1,114 @@
+"""
+{{SYSTEM_NAME}} - Verifier Agent
+Validates task execution results against success criteria.
+"""
+
+from openai import OpenAI
+from models.task_models import TaskResult, TaskPlan, ExecutionResult
+from config import settings
+from typing import List
+import logging
+
+logger = logging.getLogger(__name__)
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+verifier_agent = client.beta.agents.create(
+    name="{{SYSTEM_NAME}}_Verifier",
+    instructions="""You are a rigorous verification specialist for {{DOMAIN}}.
+
+Your role is to:
+1. Compare execution results against success criteria
+2. Identify any deviations or failures
+3. Assess overall task completion quality
+4. Provide actionable feedback for failures
+5. Suggest corrections when needed
+
+Verification principles:
+- Be thorough but fair in assessment
+- Check both functional and non-functional requirements
+- Validate data integrity and consistency
+- Verify side effects and state changes
+- Consider edge cases and error handling
+
+Pass criteria:
+- All critical steps completed successfully
+- Output matches expected format and content
+- No data corruption or loss
+- Error handling worked as expected
+- Performance within acceptable bounds
+
+Fail criteria:
+- Any critical step failed
+- Output format incorrect
+- Data validation failures
+- Unexpected errors or exceptions
+- Performance degradation
+
+Provide clear, actionable feedback for any failures.""",
+    model=settings.OPENAI_MODEL,
+    output_type=TaskResult,
+    temperature=0.2,  # Low temperature for consistent verification
+)
+
+
+async def verify_execution(
+    task_plan: TaskPlan,
+    execution_results: List[ExecutionResult],
+    context: dict = None
+) -> TaskResult:
+    """
+    Verify task execution results against the plan.
+
+    Args:
+        task_plan: Original task plan with success criteria
+        execution_results: Results from executing each step
+        context: Additional context for verification
+
+    Returns:
+        TaskResult with pass/fail status and feedback
+    """
+    logger.info(f"Verifying task: {task_plan.task_id}")
+
+    # Prepare execution summary
+    results_summary = "\n".join([
+        f"Step {r.step_id}: {r.status} - {r.output if r.output else r.error}"
+        for r in execution_results
+    ])
+
+    context_str = ""
+    if context:
+        context_str = f"\n\nAdditional Context:\n{context}"
+
+    response = client.beta.agents.run(
+        agent=verifier_agent,
+        messages=[
+            {
+                "role": "user",
+                "content": f"""Verify this task execution:
+
+TASK PLAN:
+Task ID: {task_plan.task_id}
+Description: {task_plan.description}
+Total Steps: {len(task_plan.steps)}
+Success Criteria: {task_plan.success_criteria}
+
+EXECUTION RESULTS:
+{results_summary}
+
+STEPS DETAIL:
+{chr(10).join([f"- {s.name}: {s.expected_output}" for s in task_plan.steps])}{context_str}
+
+Verify if the execution meets all success criteria and provide a detailed TaskResult."""
+            }
+        ]
+    )
+
+    # Extract TaskResult from structured output
+    task_result = response.output
+
+    logger.info(f"Verification complete: {task_result.overall_status}")
+    if not task_result.passed:
+        logger.warning(f"Task failed verification. Issues: {task_result.issues}")
+
+    return task_result

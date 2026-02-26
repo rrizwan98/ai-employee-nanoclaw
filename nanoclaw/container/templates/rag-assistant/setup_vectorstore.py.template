@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""
+Vector Store Setup Script for {{AGENT_NAME}}
+Creates and configures OpenAI vector store with documents.
+
+Usage:
+    python setup_vectorstore.py --name "{{AGENT_NAME}} Knowledge Base" --docs ./documents/
+    python setup_vectorstore.py --list
+    python setup_vectorstore.py --info <vector_store_id>
+"""
+import os
+import argparse
+from pathlib import Path
+from openai import OpenAI
+from tools.document_tools import DocumentManager
+
+
+def create_vector_store(name: str, client: OpenAI) -> str:
+    """
+    Create a new vector store.
+
+    Args:
+        name: Name for the vector store
+        client: OpenAI client instance
+
+    Returns:
+        Vector store ID
+    """
+    vector_store = client.beta.vector_stores.create(name=name)
+    print(f"Created vector store: {vector_store.id}")
+    print(f"Name: {vector_store.name}")
+    return vector_store.id
+
+
+def upload_documents(vector_store_id: str, docs_path: str):
+    """
+    Upload all documents from a directory to the vector store.
+
+    Args:
+        vector_store_id: ID of the vector store
+        docs_path: Path to directory containing documents
+    """
+    manager = DocumentManager()
+    docs_dir = Path(docs_path)
+
+    if not docs_dir.exists():
+        print(f"Error: Directory {docs_path} does not exist")
+        return
+
+    # Supported file types for vector stores
+    supported_extensions = {
+        '.txt', '.pdf', '.doc', '.docx',
+        '.md', '.json', '.csv', '.xml'
+    }
+
+    # Find all supported files
+    files = []
+    for ext in supported_extensions:
+        files.extend(docs_dir.glob(f"**/*{ext}"))
+
+    if not files:
+        print(f"No supported documents found in {docs_path}")
+        print(f"Supported formats: {', '.join(supported_extensions)}")
+        return
+
+    print(f"Found {len(files)} documents to upload")
+    print(f"Uploading to vector store {vector_store_id}...")
+
+    file_ids = manager.upload_to_vector_store(
+        vector_store_id=vector_store_id,
+        file_paths=[str(f) for f in files]
+    )
+
+    print(f"\nSuccessfully uploaded {len(file_ids)} documents")
+    print(f"\nAdd this to your .env file:")
+    print(f"VECTOR_STORE_ID={vector_store_id}")
+
+
+def list_vector_stores(client: OpenAI):
+    """List all vector stores."""
+    stores = client.beta.vector_stores.list()
+
+    if not stores.data:
+        print("No vector stores found")
+        return
+
+    print("\nVector Stores:")
+    print("-" * 80)
+    for store in stores.data:
+        print(f"ID: {store.id}")
+        print(f"Name: {store.name}")
+        print(f"Files: {store.file_counts.total}")
+        print(f"Status: {store.status}")
+        print(f"Created: {store.created_at}")
+        print("-" * 80)
+
+
+def show_vector_store_info(vector_store_id: str):
+    """Show detailed information about a vector store."""
+    manager = DocumentManager()
+
+    # Get vector store info
+    info = manager.get_vector_store_info(vector_store_id)
+    print("\nVector Store Information:")
+    print("-" * 80)
+    print(f"ID: {info['id']}")
+    print(f"Name: {info['name']}")
+    print(f"Status: {info['status']}")
+    print(f"Total Files: {info['file_counts'].get('total', 0)}")
+    print(f"Created: {info['created_at']}")
+
+    # List files
+    files = manager.list_vector_store_files(vector_store_id)
+    if files:
+        print("\nFiles:")
+        for f in files:
+            print(f"  - {f['id']} (status: {f['status']})")
+    else:
+        print("\nNo files in this vector store")
+    print("-" * 80)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Setup and manage OpenAI vector stores for {{AGENT_NAME}}"
+    )
+    parser.add_argument(
+        "--name",
+        help="Create a new vector store with this name"
+    )
+    parser.add_argument(
+        "--docs",
+        help="Path to directory containing documents to upload"
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="List all vector stores"
+    )
+    parser.add_argument(
+        "--info",
+        help="Show information about a specific vector store"
+    )
+
+    args = parser.parse_args()
+
+    # Check for API key
+    if not os.getenv("OPENAI_API_KEY"):
+        print("Error: OPENAI_API_KEY environment variable not set")
+        print("Set it in your .env file or export it in your shell")
+        return
+
+    client = OpenAI()
+
+    # List vector stores
+    if args.list:
+        list_vector_stores(client)
+        return
+
+    # Show vector store info
+    if args.info:
+        show_vector_store_info(args.info)
+        return
+
+    # Create new vector store
+    if args.name:
+        vector_store_id = create_vector_store(args.name, client)
+
+        # Upload documents if path provided
+        if args.docs:
+            upload_documents(vector_store_id, args.docs)
+        else:
+            print(f"\nVector store created but no documents uploaded")
+            print(f"To upload documents later, run:")
+            print(f"python setup_vectorstore.py --info {vector_store_id}")
+            print(f"\nAdd this to your .env file:")
+            print(f"VECTOR_STORE_ID={vector_store_id}")
+        return
+
+    # No action specified
+    parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

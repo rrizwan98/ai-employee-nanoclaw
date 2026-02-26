@@ -1,0 +1,64 @@
+# ===========================================
+# Agent Builder AI Employee - Git Ignore
+# ===========================================
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# NanoClaw specific
+nanoclaw/store/
+nanoclaw/groups/
+nanoclaw/data/
+nanoclaw/logs/
+nanoclaw/node_modules/
+nanoclaw/dist/
+nanoclaw/.env
+
+# WhatsApp auth state (sensitive)
+store/
+auth_info_baileys/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+
+# Generated agents (may contain sensitive data)
+client-agents/*/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Build artifacts
+build/
+out/

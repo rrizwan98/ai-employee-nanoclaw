@@ -1,0 +1,27 @@
+{
+  "name": "basic-chatbot",
+  "displayName": "Basic Chatbot",
+  "description": "Single agent chatbot with optional memory and tools",
+  "version": "1.0.0",
+  "agents": ["chatbot"],
+  "patterns": ["single-agent"],
+  "sdkFeatures": ["sessions", "tools"],
+  "useCases": ["FAQ bot", "simple assistant", "conversational interface"],
+  "keywords": ["faq", "chatbot", "assistant", "simple", "basic", "bot", "conversation", "chat"],
+  "complexity": "simple",
+  "files": [
+    {"path": "main.py", "template": "main.py.template"},
+    {"path": "config.py", "template": "config.py.template"},
+    {"path": "requirements.txt", "template": "requirements.txt"},
+    {"path": ".env.example", "template": ".env.example"},
+    {"path": "Dockerfile", "template": "Dockerfile"},
+    {"path": "README.md", "template": "README.md.template"}
+  ],
+  "variables": [
+    {"name": "AGENT_NAME", "description": "Name of the chatbot", "required": true},
+    {"name": "DOMAIN", "description": "Client domain/industry", "required": true},
+    {"name": "INSTRUCTIONS", "description": "Custom instructions", "required": true},
+    {"name": "USE_MEMORY", "description": "Enable SQLiteSession", "default": "true"},
+    {"name": "USE_WEB_SEARCH", "description": "Enable WebSearchTool", "default": "false"}
+  ]
+}

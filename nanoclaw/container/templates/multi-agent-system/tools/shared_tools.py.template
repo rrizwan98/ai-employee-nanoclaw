@@ -1,0 +1,158 @@
+"""
+{{SYSTEM_NAME}} Shared Tools
+Common tools available to all agents in the system.
+"""
+from agents import function_tool
+from context.shared_context import shared_context
+from typing import Any, Dict, Optional
+import json
+
+
+@function_tool
+def get_context(key: str) -> str:
+    """
+    Get a value from shared context.
+
+    Args:
+        key: The key to retrieve from shared context
+
+    Returns:
+        The value as a JSON string, or "null" if not found
+    """
+    value = shared_context.get(key)
+    return json.dumps(value) if value is not None else "null"
+
+
+@function_tool
+def set_context(key: str, value: str) -> str:
+    """
+    Set a value in shared context.
+
+    Args:
+        key: The key to set
+        value: The value to store (as JSON string)
+
+    Returns:
+        Confirmation message
+    """
+    try:
+        parsed_value = json.loads(value)
+    except json.JSONDecodeError:
+        parsed_value = value
+
+    shared_context.set(key, parsed_value)
+    return f"Successfully set context key: {key}"
+
+
+@function_tool
+def log_activity(action: str, details: Optional[str] = None) -> str:
+    """
+    Log an activity in the system.
+
+    Args:
+        action: Description of the action
+        details: Optional additional details as JSON string
+
+    Returns:
+        Confirmation message
+    """
+    details_dict = {}
+    if details:
+        try:
+            details_dict = json.loads(details)
+        except json.JSONDecodeError:
+            details_dict = {"note": details}
+
+    shared_context.log_activity(action, details_dict)
+    return f"Activity logged: {action}"
+
+
+@function_tool
+def get_activity_log(limit: int = 10) -> str:
+    """
+    Get recent activity log entries.
+
+    Args:
+        limit: Maximum number of entries to return (default: 10, max: 50)
+
+    Returns:
+        JSON string of recent activity log entries
+    """
+    limit = min(limit, 50)
+    log = shared_context.get_activity_log(limit)
+    return json.dumps(log, indent=2)
+
+
+@function_tool
+def add_task(task_name: str, assigned_to: str, status: str = "pending") -> str:
+    """
+    Add a task to track in the system.
+
+    Args:
+        task_name: Name of the task
+        assigned_to: Agent assigned to the task
+        status: Task status (pending, in_progress, completed, failed)
+
+    Returns:
+        The task ID
+    """
+    task_id = shared_context.add_task(task_name, assigned_to, status)
+    return task_id
+
+
+@function_tool
+def update_task(task_id: str, status: str, result: Optional[str] = None) -> str:
+    """
+    Update a task's status.
+
+    Args:
+        task_id: The task ID
+        status: New status (pending, in_progress, completed, failed)
+        result: Optional result description
+
+    Returns:
+        Confirmation message
+    """
+    shared_context.update_task(task_id, status, result)
+    return f"Task {task_id} updated to status: {status}"
+
+
+@function_tool
+def get_all_tasks() -> str:
+    """
+    Get all tasks in the system.
+
+    Returns:
+        JSON string of all tasks
+    """
+    tasks = shared_context.get("tasks", [])
+    return json.dumps(tasks, indent=2)
+
+
+@function_tool
+def export_system_state() -> str:
+    """
+    Export the complete system state as JSON.
+
+    Returns:
+        JSON string of the entire system state
+    """
+    return shared_context.export_state()
+
+
+# Add domain-specific tools below
+# Example:
+#
+# @function_tool
+# def calculate_metrics(data: str) -> str:
+#     """
+#     Calculate domain-specific metrics.
+#
+#     Args:
+#         data: Input data as JSON string
+#
+#     Returns:
+#         Calculated metrics as JSON string
+#     """
+#     # Implementation here
+#     pass

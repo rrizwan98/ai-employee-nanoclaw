@@ -1,0 +1,15 @@
+"""
+{{COMPANY_NAME}} Customer Support Agents
+Multi-agent system with triage and specialist agents.
+"""
+from .triage import triage_agent
+from .billing import billing_agent
+from .technical import technical_agent
+from .general import general_agent
+
+__all__ = [
+    "triage_agent",
+    "billing_agent",
+    "technical_agent",
+    "general_agent",
+]

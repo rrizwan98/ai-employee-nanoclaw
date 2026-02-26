@@ -1,0 +1,14 @@
+"""
+{{DOMAIN}} Data Processing Agents
+
+This module exports the three-agent pipeline:
+- input_validator: Validates and structures incoming {{INPUT_TYPE}}
+- processor: Processes validated data according to {{DOMAIN}} rules
+- output_formatter: Formats processed data into {{OUTPUT_TYPE}}
+"""
+
+from .input_validator import input_validator
+from .processor import processor
+from .output_formatter import output_formatter
+
+__all__ = ["input_validator", "processor", "output_formatter"]

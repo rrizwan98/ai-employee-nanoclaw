@@ -1,0 +1,42 @@
+'use client';
+
+import { ReactNode } from 'react';
+import ChatWidget from './ChatWidget';
+
+interface ChatProviderProps {
+  children: ReactNode;
+  apiUrl?: string;
+  domainKey?: string;
+  enabled?: boolean;
+  greeting?: string;
+  placeholder?: string;
+  colorScheme?: 'light' | 'dark';
+  primaryColor?: string;
+}
+
+export default function ChatProvider({
+  children,
+  apiUrl,
+  domainKey,
+  enabled = true,
+  greeting,
+  placeholder,
+  colorScheme,
+  primaryColor,
+}: ChatProviderProps) {
+  return (
+    <>
+      {children}
+      {enabled && (
+        <ChatWidget
+          apiUrl={apiUrl || process.env.NEXT_PUBLIC_CHATKIT_API_URL || '{{backend_url}}'}
+          domainKey={domainKey || process.env.NEXT_PUBLIC_CHATKIT_DOMAIN_KEY || '{{domain_key}}'}
+          greeting={greeting || '{{chat_greeting}}'}
+          placeholder={placeholder || '{{chat_placeholder}}'}
+          colorScheme={colorScheme || '{{color_scheme}}' as 'light' | 'dark'}
+          primaryColor={primaryColor || '{{primary_color}}'}
+        />
+      )}
+    </>
+  );
+}

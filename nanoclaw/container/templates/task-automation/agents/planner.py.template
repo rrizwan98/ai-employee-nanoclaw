@@ -1,0 +1,67 @@
+"""
+{{SYSTEM_NAME}} - Planner Agent
+Breaks down complex tasks into executable steps.
+"""
+
+from openai import OpenAI
+from models.task_models import TaskPlan
+from config import settings
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+planner_agent = client.beta.agents.create(
+    name="{{SYSTEM_NAME}}_Planner",
+    instructions="""You are an expert task planner for {{DOMAIN}}.
+
+Your role is to:
+1. Analyze the incoming task request thoroughly
+2. Break it down into clear, sequential steps
+3. Identify dependencies between steps
+4. Estimate complexity and resource requirements
+5. Define success criteria for each step
+
+Supported task types: {{TASK_TYPES}}
+
+Guidelines:
+- Create atomic, testable steps
+- Include rollback strategies for critical operations
+- Consider error handling at each step
+- Estimate realistic timeframes
+- Flag steps requiring human approval
+
+Output a complete TaskPlan with all necessary details.""",
+    model=settings.OPENAI_MODEL,
+    output_type=TaskPlan,
+    temperature=0.3,  # Lower temperature for consistent planning
+)
+
+
+async def plan_task(task_description: str, context: dict = None) -> TaskPlan:
+    """
+    Plan a task by breaking it into executable steps.
+
+    Args:
+        task_description: Natural language description of the task
+        context: Optional context (user preferences, constraints, etc.)
+
+    Returns:
+        TaskPlan with structured steps
+    """
+    context_str = ""
+    if context:
+        context_str = f"\n\nContext:\n{context}"
+
+    response = client.beta.agents.run(
+        agent=planner_agent,
+        messages=[
+            {
+                "role": "user",
+                "content": f"Plan the following task:\n\n{task_description}{context_str}"
+            }
+        ]
+    )
+
+    # Extract the TaskPlan from structured output
+    task_plan = response.output
+
+    return task_plan

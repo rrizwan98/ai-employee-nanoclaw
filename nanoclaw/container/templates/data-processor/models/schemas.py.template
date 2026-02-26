@@ -1,0 +1,203 @@
+"""
+Pydantic Schemas for {{DOMAIN}} Data Processing Pipeline
+
+Defines structured outputs for each agent in the pipeline:
+- ValidatedInput: Output from input_validator
+- ProcessedData: Output from processor
+- FormattedOutput: Output from output_formatter
+"""
+
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+
+
+class ValidatedInput(BaseModel):
+    """Structured output from input_validator agent"""
+
+    # Validation status
+    is_valid: bool = Field(
+        description="Whether the input passed all validation rules"
+    )
+
+    # Core data fields (customize based on {{INPUT_TYPE}})
+    raw_data: Dict[str, Any] = Field(
+        description="Original input data",
+        default_factory=dict
+    )
+
+    structured_data: Dict[str, Any] = Field(
+        description="Normalized and structured data fields",
+        default_factory=dict
+    )
+
+    # Validation metadata
+    validation_timestamp: str = Field(
+        default_factory=lambda: datetime.utcnow().isoformat(),
+        description="When validation occurred"
+    )
+
+    errors: List[str] = Field(
+        default_factory=list,
+        description="List of validation errors, if any"
+    )
+
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="List of validation warnings"
+    )
+
+    confidence_score: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in validation (0-1)"
+    )
+
+    # Domain-specific fields (customize for {{DOMAIN}})
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional {{DOMAIN}}-specific metadata"
+    )
+
+
+class ProcessedData(BaseModel):
+    """Structured output from processor agent"""
+
+    # Processing status
+    processing_successful: bool = Field(
+        description="Whether processing completed successfully"
+    )
+
+    # Processed data
+    results: Dict[str, Any] = Field(
+        description="Processed and transformed data",
+        default_factory=dict
+    )
+
+    insights: List[str] = Field(
+        default_factory=list,
+        description="Key insights derived from processing"
+    )
+
+    # Processing metadata
+    processing_timestamp: str = Field(
+        default_factory=lambda: datetime.utcnow().isoformat(),
+        description="When processing occurred"
+    )
+
+    processing_duration_ms: Optional[float] = Field(
+        default=None,
+        description="Processing duration in milliseconds"
+    )
+
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="Processing warnings"
+    )
+
+    confidence_score: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in processing results (0-1)"
+    )
+
+    # Domain-specific fields (customize for {{DOMAIN}})
+    metrics: Dict[str, float] = Field(
+        default_factory=dict,
+        description="{{DOMAIN}}-specific metrics and statistics"
+    )
+
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional processing metadata"
+    )
+
+
+class FormattedOutput(BaseModel):
+    """Structured output from output_formatter agent"""
+
+    # Formatted output
+    formatted_data: str = Field(
+        description="Data formatted as {{OUTPUT_TYPE}}"
+    )
+
+    output_type: str = Field(
+        default="{{OUTPUT_TYPE}}",
+        description="Type of output format"
+    )
+
+    # Summary and presentation
+    summary: str = Field(
+        default="",
+        description="Human-readable summary of the output"
+    )
+
+    key_points: List[str] = Field(
+        default_factory=list,
+        description="Key highlights or takeaways"
+    )
+
+    # Formatting metadata
+    formatting_timestamp: str = Field(
+        default_factory=lambda: datetime.utcnow().isoformat(),
+        description="When formatting occurred"
+    )
+
+    character_count: Optional[int] = Field(
+        default=None,
+        description="Character count of formatted output"
+    )
+
+    # Domain-specific fields (customize for {{DOMAIN}})
+    presentation_hints: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Hints for presenting the {{OUTPUT_TYPE}}"
+    )
+
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional formatting metadata"
+    )
+
+
+class PipelineRequest(BaseModel):
+    """Request model for the complete pipeline"""
+
+    input_data: str = Field(
+        description="Raw {{INPUT_TYPE}} data to process"
+    )
+
+    options: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Optional processing parameters"
+    )
+
+
+class PipelineResponse(BaseModel):
+    """Response model for the complete pipeline"""
+
+    success: bool = Field(
+        description="Whether the entire pipeline succeeded"
+    )
+
+    # Results from each stage
+    validation_result: ValidatedInput
+    processing_result: Optional[ProcessedData] = None
+    formatting_result: Optional[FormattedOutput] = None
+
+    # Pipeline metadata
+    pipeline_duration_ms: float = Field(
+        description="Total pipeline execution time"
+    )
+
+    errors: List[str] = Field(
+        default_factory=list,
+        description="Pipeline-level errors"
+    )
+
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional pipeline metadata"
+    )
