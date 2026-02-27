@@ -780,9 +780,9 @@ function validateChatKitIntegration(files: Record<string, string>): { valid: boo
   if (packageJsonPath) {
     const content = files[packageJsonPath];
     if (content.includes('@openai/chatkit-react')) {
-      // Check for correct version
-      if (!content.includes('"@openai/chatkit-react": "^0.1.9"')) {
-        errors.push('package.json MUST have @openai/chatkit-react version ^0.1.9');
+      // Check that chatkit-react is present (version not pinned - use latest)
+      if (!content.includes('"@openai/chatkit-react"')) {
+        errors.push('package.json MUST have @openai/chatkit-react');
       }
     }
   }

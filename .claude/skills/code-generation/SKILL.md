@@ -9,6 +9,17 @@ Generate complete, runnable OpenAI Agents SDK code from AgentConfig and architec
 
 ---
 
+## References
+
+| Reference | Description |
+|-----------|-------------|
+| [code-templates.md](references/code-templates.md) | Complete code templates for all agent types |
+| [import-mappings.md](references/import-mappings.md) | Config to Python import mappings |
+
+**See `../agent-builder/references/` for SDK pattern details.**
+
+---
+
 ## Context7: Up-to-Date Documentation
 
 **Use Context7 tools to verify SDK patterns before code generation!**
@@ -50,7 +61,7 @@ Next.js:           /vercel/next.js
 4. **NEVER** import `lucide-react` icons (MessageCircle, Send, X) for chat
 5. **NEVER** create custom message bubbles or chat UI components
 6. **NEVER** write SSE/streaming code manually for chat
-7. **NEVER** use any version other than `@openai/chatkit-react@^0.1.9`
+7. **NEVER** use any version other than `@openai/chatkit-react`
 
 ### What MUST Be Used Instead:
 
@@ -73,7 +84,7 @@ Before delivering ANY frontend code, verify:
 - [ ] `ChatWidget.tsx` contains `import { ChatKit, useChatKit } from '@openai/chatkit-react'`
 - [ ] `ChatWidget.tsx` does NOT contain `useState` for messages
 - [ ] `ChatWidget.tsx` does NOT contain `fetch()` or `axios`
-- [ ] `package.json` contains `"@openai/chatkit-react": "^0.1.9"`
+- [ ] `package.json` contains `"@openai/chatkit-react": "^1.5.0"`
 
 **If validation fails, regenerate using `generate_frontend_from_template` tool.**
 
@@ -369,34 +380,232 @@ After local storage, create ZIP and send to WhatsApp.
 
 ## Code Patterns
 
-### Standard Agent main.py
+### Standard Agent main.py (ChatKit-Compatible)
 
 ```python
 """
-{AGENT_NAME} - OpenAI Agents SDK Application
+{AGENT_NAME} - ChatKit Backend
 """
 
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from agents import Runner
-from agents_config import agent
+from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse, Response
+from fastapi.middleware.cors import CORSMiddleware
+from chatkit.server import StreamingResult
+
+from server import server
 
 load_dotenv()
+
 app = FastAPI(title="{AGENT_NAME}")
+
+# CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+async def root():
+    return {"service": "{AGENT_NAME}", "status": "running"}
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-@app.post("/chat")
-async def chat(message: str):
-    result = await Runner.run(agent, message)
-    return {"response": result.final_output}
+@app.post("/chatkit")
+async def chatkit_endpoint(request: Request):
+    """ChatKit protocol endpoint."""
+    payload = await request.body()
+    result = await server.process(payload, context={})
+
+    if isinstance(result, StreamingResult):
+        return StreamingResponse(
+            result,
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        )
+    return Response(content=result.json, media_type="application/json")
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+### Standard Agent server.py (ChatKitServer)
+
+```python
+"""
+{AGENT_NAME} - ChatKit Server
+"""
+
+from collections.abc import AsyncIterator
+
+from chatkit.server import ChatKitServer
+from chatkit.types import (
+    ThreadMetadata,
+    ThreadStreamEvent,
+    UserMessageItem,
+)
+from chatkit.agents import AgentContext, simple_to_agent_input, stream_agent_response
+from agents import Runner
+
+from agents_config import agent
+from store import InMemoryStore
+
+
+class MyChatKitServer(ChatKitServer[dict]):
+    """ChatKit server integrated with OpenAI Agents SDK."""
+
+    def __init__(self, store: InMemoryStore):
+        super().__init__(store)
+
+    async def respond(
+        self,
+        thread: ThreadMetadata,
+        input_user_message: UserMessageItem | None,
+        context: dict,
+    ) -> AsyncIterator[ThreadStreamEvent]:
+        """Generate response using agent."""
+
+        # Load thread history for context
+        items_page = await self.store.load_thread_items(
+            thread.id,
+            after=None,
+            limit=20,
+            order="asc",
+            context=context,
+        )
+
+        # Convert ChatKit thread items to agent input
+        agent_input = await simple_to_agent_input(items_page.data)
+
+        # Create agent context for streaming
+        agent_context = AgentContext(
+            thread=thread,
+            store=self.store,
+            request_context=context,
+        )
+
+        # Run agent and stream response
+        result = Runner.run_streamed(agent, agent_input, context=agent_context)
+
+        async for event in stream_agent_response(agent_context, result):
+            yield event
+
+
+# Initialize server with in-memory store
+store = InMemoryStore()
+server = MyChatKitServer(store=store)
+```
+
+### Standard Agent store.py (InMemoryStore)
+
+```python
+"""
+In-memory thread store for development.
+"""
+
+from datetime import datetime
+from typing import Dict, List, Optional
+from collections import defaultdict
+from chatkit.store import Store, NotFoundError
+from chatkit.types import ThreadMetadata, ThreadItem, Page, Attachment
+
+
+class InMemoryStore(Store[dict]):
+    """Simple in-memory thread storage for development."""
+
+    def __init__(self):
+        self._threads: Dict[str, ThreadMetadata] = {}
+        self._items: Dict[str, List[ThreadItem]] = defaultdict(list)
+        self._attachments: Dict[str, Attachment] = {}
+
+    async def load_thread(self, thread_id: str, context: dict) -> ThreadMetadata:
+        if thread_id not in self._threads:
+            raise NotFoundError(f"Thread {thread_id} not found")
+        return self._threads[thread_id]
+
+    async def save_thread(self, thread: ThreadMetadata, context: dict) -> None:
+        self._threads[thread.id] = thread
+
+    async def load_threads(
+        self, limit: int, after: Optional[str], order: str, context: dict
+    ) -> Page[ThreadMetadata]:
+        threads = list(self._threads.values())
+        sorted_threads = sorted(threads, key=lambda t: t.created_at, reverse=(order == "desc"))
+        start = 0
+        if after:
+            for idx, t in enumerate(sorted_threads):
+                if t.id == after:
+                    start = idx + 1
+                    break
+        data = sorted_threads[start:start + limit]
+        has_more = start + limit < len(sorted_threads)
+        next_after = data[-1].id if has_more and data else None
+        return Page(data=data, has_more=has_more, after=next_after)
+
+    async def delete_thread(self, thread_id: str, context: dict) -> None:
+        self._threads.pop(thread_id, None)
+        self._items.pop(thread_id, None)
+
+    async def load_thread_items(
+        self, thread_id: str, after: Optional[str], limit: int, order: str, context: dict
+    ) -> Page[ThreadItem]:
+        items = self._items.get(thread_id, [])
+        sorted_items = sorted(items, key=lambda i: i.created_at, reverse=(order == "desc"))
+        start = 0
+        if after:
+            for idx, item in enumerate(sorted_items):
+                if item.id == after:
+                    start = idx + 1
+                    break
+        data = sorted_items[start:start + limit]
+        has_more = start + limit < len(sorted_items)
+        next_after = data[-1].id if has_more and data else None
+        return Page(data=data, has_more=has_more, after=next_after)
+
+    async def add_thread_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+        self._items[thread_id].append(item)
+
+    async def delete_thread_item(self, thread_id: str, item_id: str, context: dict) -> None:
+        if thread_id in self._items:
+            self._items[thread_id] = [i for i in self._items[thread_id] if i.id != item_id]
+
+    async def load_attachment(self, attachment_id: str, context: dict) -> Attachment:
+        if attachment_id not in self._attachments:
+            raise NotFoundError(f"Attachment {attachment_id} not found")
+        return self._attachments[attachment_id]
+
+    async def save_attachment(self, attachment: Attachment, context: dict) -> None:
+        self._attachments[attachment.id] = attachment
+
+    async def delete_attachment(self, attachment_id: str, context: dict) -> None:
+        self._attachments.pop(attachment_id, None)
+
+    async def load_item(self, thread_id: str, item_id: str, context: dict) -> ThreadItem:
+        if thread_id not in self._items:
+            raise NotFoundError(f"Thread {thread_id} not found")
+        for item in self._items[thread_id]:
+            if item.id == item_id:
+                return item
+        raise NotFoundError(f"Item {item_id} not found")
+
+    async def save_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+        if thread_id not in self._items:
+            self._items[thread_id] = []
+        for i, existing in enumerate(self._items[thread_id]):
+            if existing.id == item.id:
+                self._items[thread_id][i] = item
+                return
+        self._items[thread_id].append(item)
 ```
 
 ### Realtime Agent server.py

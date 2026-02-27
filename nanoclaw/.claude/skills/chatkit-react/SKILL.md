@@ -55,7 +55,7 @@ Add to `package.json`:
 ```json
 {
   "dependencies": {
-    "@openai/chatkit-react": "^0.1.9"
+    "@openai/chatkit-react": "^1.5.0"
   }
 }
 ```

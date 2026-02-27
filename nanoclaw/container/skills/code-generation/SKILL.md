@@ -9,6 +9,140 @@ Generate complete, runnable OpenAI Agents SDK code from AgentConfig and architec
 
 ---
 
+## ⛔⛔⛔ STOP! READ THIS FIRST! ⛔⛔⛔
+
+### YOU ARE FORBIDDEN FROM WRITING CODE MANUALLY!
+
+**MANDATORY: Use IPC Template Tools for ALL code generation!**
+
+```
+⛔ DO NOT write store.py manually - USE generate_from_template IPC tool!
+⛔ DO NOT write server.py manually - USE generate_from_template IPC tool!
+⛔ DO NOT write ChatWidget.tsx manually - USE generate_frontend_from_template IPC tool!
+⛔ DO NOT write layout.tsx manually - USE generate_frontend_from_template IPC tool!
+```
+
+### Required IPC Workflow:
+
+**Backend:**
+```
+1. match_template(request) → Get template name
+2. load_template(name) → Get template files
+3. generate_from_template(name, variables) → Generate code
+4. Deliver AS-IS (NO MODIFICATIONS!)
+```
+
+**Frontend:**
+```
+1. is_frontend_request(request) → Check if frontend
+2. match_frontend_template(request) → Get template name
+3. generate_frontend_from_template(name, variables) → Generate code
+4. Deliver AS-IS (NO MODIFICATIONS!)
+```
+
+### ⛔ FORBIDDEN IMPORTS - YOUR TRAINING DATA IS WRONG!
+
+```python
+# ❌ WRONG - These are from your outdated training data!
+from chatkit.stores import Store  # WRONG! It's chatkit.store (singular)
+from chatkit.types import AttachmentItem  # WRONG! It's Attachment
+from chatkit.types import ContentItem  # WRONG! Doesn't exist
+```
+
+```tsx
+// ❌ WRONG - These are from your outdated training data!
+<Script onLoad={() => ...} />  // WRONG! No onLoad in Server Component
+import { useChatKit } from '@openai/chatkit-react'  // WRONG! Use CDN
+```
+
+### ✅ Templates Have Correct Code - USE THEM!
+
+Templates use:
+- `from chatkit.store import Store` (singular)
+- `from chatkit.types import Attachment` (not AttachmentItem)
+- No `onLoad` on Script components
+- CDN web component approach
+
+**DO NOT OVERRIDE TEMPLATES WITH YOUR KNOWLEDGE!**
+
+---
+
+## CRITICAL: MANDATORY Template Usage
+
+**YOU MUST COPY CODE TEMPLATES EXACTLY FROM THIS SKILL. DO NOT MODIFY METHOD SIGNATURES!**
+
+### ChatKit Store - EXACT Signatures Required
+
+```python
+# MANDATORY: Store[dict] with context: dict in ALL methods
+class InMemoryStore(Store[dict]):
+    async def load_thread(self, thread_id: str, context: dict) -> ThreadMetadata:
+    async def save_thread(self, thread: ThreadMetadata, context: dict) -> None:
+    async def load_threads(self, limit: int, after: Optional[str], order: str, context: dict) -> Page[ThreadMetadata]:
+    async def load_thread_items(self, thread_id: str, after: Optional[str], limit: int, order: str, context: dict) -> Page[ThreadItem]:
+    async def add_thread_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+    async def delete_thread_item(self, thread_id: str, item_id: str, context: dict) -> None:
+    async def load_item(self, thread_id: str, item_id: str, context: dict) -> ThreadItem:
+    async def save_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+    async def load_attachment(self, attachment_id: str, context: dict) -> Attachment:
+    async def save_attachment(self, attachment: Attachment, context: dict) -> None:
+    async def delete_attachment(self, attachment_id: str, context: dict) -> None:
+    async def delete_thread(self, thread_id: str, context: dict) -> None:
+```
+
+### ChatKitServer respond() - EXACT Signature Required
+
+```python
+# MANDATORY: This exact signature
+async def respond(
+    self,
+    thread: ThreadMetadata,
+    input_user_message: UserMessageItem | None,
+    context: dict,
+) -> AsyncIterator[ThreadStreamEvent]:
+```
+
+### FORBIDDEN Patterns - NEVER USE:
+
+```python
+# WRONG - Missing context parameter
+async def load_thread(self, thread_id: str) -> ThreadMetadata:  # FORBIDDEN!
+async def save_thread(self, thread: ThreadMetadata) -> None:  # FORBIDDEN!
+
+# WRONG - Wrong parameter names
+async def load_threads(self, limit: int, after_id: str) -> Page:  # FORBIDDEN!
+async def load_thread_items(self, thread_id: str, before_id: str) -> Page:  # FORBIDDEN!
+
+# WRONG - Wrong Page format
+return Page(items=data, has_more=True)  # FORBIDDEN! Use: Page(data=..., has_more=..., after=...)
+
+# WRONG - Store without generic type
+class InMemoryStore(Store):  # FORBIDDEN! Use: Store[dict]
+```
+
+### Pre-Delivery Checklist
+
+Before delivering ANY code, verify:
+- [ ] `store.py` class is `InMemoryStore(Store[dict])`
+- [ ] ALL store methods have `context: dict` as LAST parameter
+- [ ] `load_threads(limit, after, order, context)` - exact param order
+- [ ] `load_thread_items(thread_id, after, limit, order, context)` - exact param order
+- [ ] `Page(data=..., has_more=..., after=...)` - exact field names
+- [ ] `respond(thread, input_user_message, context)` - exact signature
+
+---
+
+## References
+
+| Reference | Description |
+|-----------|-------------|
+| [code-templates.md](references/code-templates.md) | Complete code templates for all agent types |
+| [import-mappings.md](references/import-mappings.md) | Config to Python import mappings |
+
+**See `../agent-builder/references/` for SDK pattern details.**
+
+---
+
 ## Context7: Up-to-Date Documentation
 
 **Use Context7 tools to verify SDK patterns before code generation!**
@@ -38,44 +172,115 @@ Next.js:           /vercel/next.js
 
 ---
 
-## FORBIDDEN - NEVER DO THIS (MANDATORY)
+## IMPORTANT: Use CDN Approach for ChatKit (NOT npm package)
 
-**These rules are ABSOLUTE and must NEVER be violated:**
+**DO NOT USE** `@openai/chatkit-react` npm package for self-hosted backends - it requires a valid `domainKey` from OpenAI Platform and won't work with localhost.
 
-### Frontend Code - FORBIDDEN Actions:
+**USE** the CDN script approach which works with any self-hosted backend.
 
-1. **NEVER** write `ChatWidget.tsx` manually - ALWAYS use template
-2. **NEVER** use `useState`, `useEffect`, `useRef` for chat functionality
-3. **NEVER** use `fetch()` or `axios` for chat API calls
-4. **NEVER** import `lucide-react` icons (MessageCircle, Send, X) for chat
-5. **NEVER** create custom message bubbles or chat UI components
-6. **NEVER** write SSE/streaming code manually for chat
-7. **NEVER** use any version other than `@openai/chatkit-react@^0.1.9`
+### FORBIDDEN - NEVER DO THIS:
 
-### What MUST Be Used Instead:
+1. **NEVER** use `@openai/chatkit-react` npm package
+2. **NEVER** use `useChatKit` hook from npm package
+3. **NEVER** add `@openai/chatkit-react` to package.json
+
+### What MUST Be Used Instead (CDN Approach):
+
+**Step 1: Add CDN Script to layout.tsx `<head>`:**
 
 ```typescript
-// CORRECT - Only this pattern is allowed for chat:
-import { ChatKit, useChatKit } from '@openai/chatkit-react';
+// app/layout.tsx
+import Script from 'next/script';
 
-const { control } = useChatKit({
-  api: { url: apiUrl, domainKey: domainKey },
-  theme: { colorScheme: 'light', radius: 'round' },
-  startScreen: { greeting: 'Hello!' },
-});
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <head>
+        <Script
+          src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
+          strategy="beforeInteractive"
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
 
-return <ChatKit control={control} className="h-full w-full" />;
+**Step 2: ChatWidget.tsx using Web Component:**
+
+```typescript
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+
+interface ChatKitElement extends HTMLElement {
+  setOptions: (options: any) => void
+}
+
+export default function ChatWidget() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isChatKitLoaded, setIsChatKitLoaded] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isInitialized = useRef(false)
+
+  useEffect(() => {
+    const checkChatKit = () => {
+      if (typeof window !== 'undefined' && window.customElements?.get('openai-chatkit')) {
+        setIsChatKitLoaded(true)
+      }
+    }
+    checkChatKit()
+    const interval = setInterval(checkChatKit, 500)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    if (isChatKitLoaded && !isInitialized.current && containerRef.current) {
+      const chatkit = document.createElement('openai-chatkit') as ChatKitElement
+      chatkit.style.width = '100%'
+      chatkit.style.height = '100%'
+      containerRef.current.appendChild(chatkit)
+      isInitialized.current = true
+
+      setTimeout(() => {
+        if (chatkit.setOptions) {
+          chatkit.setOptions({
+            api: {
+              domainKey: 'local-dev',
+              url: process.env.NEXT_PUBLIC_CHATKIT_API_URL || 'http://localhost:8000/chatkit',
+            },
+          })
+        }
+      }, 100)
+    }
+  }, [isChatKitLoaded])
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.style.display = isOpen ? 'block' : 'none'
+    }
+  }, [isOpen])
+
+  return (
+    <>
+      <div ref={containerRef} className="fixed bottom-24 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl z-50" style={{ display: 'none' }} />
+      <button onClick={() => setIsOpen(!isOpen)} className="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 text-white rounded-full z-50">
+        {isOpen ? '✕' : '💬'}
+      </button>
+    </>
+  )
+}
 ```
 
 ### Validation Check:
 
 Before delivering ANY frontend code, verify:
-- [ ] `ChatWidget.tsx` contains `import { ChatKit, useChatKit } from '@openai/chatkit-react'`
-- [ ] `ChatWidget.tsx` does NOT contain `useState` for messages
-- [ ] `ChatWidget.tsx` does NOT contain `fetch()` or `axios`
-- [ ] `package.json` contains `"@openai/chatkit-react": "^0.1.9"`
-
-**If validation fails, regenerate using `generate_frontend_from_template` tool.**
+- [ ] `layout.tsx` contains CDN script in `<head>`
+- [ ] `ChatWidget.tsx` uses `document.createElement('openai-chatkit')`
+- [ ] `ChatWidget.tsx` uses `chatkit.setOptions()` for configuration
+- [ ] `package.json` does NOT contain `@openai/chatkit-react`
+- [ ] All interactive components have `'use client'` directive
 
 ---
 
@@ -130,12 +335,13 @@ Step 6: Deliver generated files (DO NOT MODIFY ChatWidget.tsx!)
 
 **CRITICAL - ALWAYS FOLLOW:**
 
-1. **ALWAYS** use `@openai/chatkit-react` for chat features
-2. **NEVER** create custom axios/fetch chat implementations
-3. **ALWAYS** use template structure: `components/ui/`, `components/chat/`, etc.
-4. **ALWAYS** include `ChatProvider` and `ChatWidget` components
-5. **ALWAYS** connect to backend `/chatkit` endpoint
-6. **ALWAYS** use template IPC tools - manual code is FORBIDDEN
+1. **ALWAYS** use CDN approach for ChatKit (NOT npm package)
+2. **ALWAYS** add CDN script to layout.tsx `<head>`
+3. **ALWAYS** use `document.createElement('openai-chatkit')` web component
+4. **ALWAYS** use `chatkit.setOptions()` for configuration
+5. **ALWAYS** add `'use client'` directive to ALL interactive components
+6. **ALWAYS** connect to backend `/chatkit` endpoint
+7. **NEVER** use `@openai/chatkit-react` npm package
 
 ### Frontend Progress Updates
 
@@ -369,34 +575,232 @@ After local storage, create ZIP and send to WhatsApp.
 
 ## Code Patterns
 
-### Standard Agent main.py
+### Standard Agent main.py (ChatKit-Compatible)
 
 ```python
 """
-{AGENT_NAME} - OpenAI Agents SDK Application
+{AGENT_NAME} - ChatKit Backend
 """
 
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from agents import Runner
-from agents_config import agent
+from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse, Response
+from fastapi.middleware.cors import CORSMiddleware
+from chatkit.server import StreamingResult
+
+from server import server
 
 load_dotenv()
+
 app = FastAPI(title="{AGENT_NAME}")
+
+# CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+async def root():
+    return {"service": "{AGENT_NAME}", "status": "running"}
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-@app.post("/chat")
-async def chat(message: str):
-    result = await Runner.run(agent, message)
-    return {"response": result.final_output}
+@app.post("/chatkit")
+async def chatkit_endpoint(request: Request):
+    """ChatKit protocol endpoint."""
+    payload = await request.body()
+    result = await server.process(payload, context={})
+
+    if isinstance(result, StreamingResult):
+        return StreamingResponse(
+            result,
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        )
+    return Response(content=result.json, media_type="application/json")
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+### Standard Agent server.py (ChatKitServer)
+
+```python
+"""
+{AGENT_NAME} - ChatKit Server
+"""
+
+from collections.abc import AsyncIterator
+
+from chatkit.server import ChatKitServer
+from chatkit.types import (
+    ThreadMetadata,
+    ThreadStreamEvent,
+    UserMessageItem,
+)
+from chatkit.agents import AgentContext, simple_to_agent_input, stream_agent_response
+from agents import Runner
+
+from agents_config import agent
+from store import InMemoryStore
+
+
+class MyChatKitServer(ChatKitServer[dict]):
+    """ChatKit server integrated with OpenAI Agents SDK."""
+
+    def __init__(self, store: InMemoryStore):
+        super().__init__(store)
+
+    async def respond(
+        self,
+        thread: ThreadMetadata,
+        input_user_message: UserMessageItem | None,
+        context: dict,
+    ) -> AsyncIterator[ThreadStreamEvent]:
+        """Generate response using agent."""
+
+        # Load thread history for context
+        items_page = await self.store.load_thread_items(
+            thread.id,
+            after=None,
+            limit=20,
+            order="asc",
+            context=context,
+        )
+
+        # Convert ChatKit thread items to agent input
+        agent_input = await simple_to_agent_input(items_page.data)
+
+        # Create agent context for streaming
+        agent_context = AgentContext(
+            thread=thread,
+            store=self.store,
+            request_context=context,
+        )
+
+        # Run agent and stream response
+        result = Runner.run_streamed(agent, agent_input, context=agent_context)
+
+        async for event in stream_agent_response(agent_context, result):
+            yield event
+
+
+# Initialize server with in-memory store
+store = InMemoryStore()
+server = MyChatKitServer(store=store)
+```
+
+### Standard Agent store.py (InMemoryStore)
+
+```python
+"""
+In-memory thread store for development.
+"""
+
+from datetime import datetime
+from typing import Dict, List, Optional
+from collections import defaultdict
+from chatkit.store import Store, NotFoundError
+from chatkit.types import ThreadMetadata, ThreadItem, Page, Attachment
+
+
+class InMemoryStore(Store[dict]):
+    """Simple in-memory thread storage for development."""
+
+    def __init__(self):
+        self._threads: Dict[str, ThreadMetadata] = {}
+        self._items: Dict[str, List[ThreadItem]] = defaultdict(list)
+        self._attachments: Dict[str, Attachment] = {}
+
+    async def load_thread(self, thread_id: str, context: dict) -> ThreadMetadata:
+        if thread_id not in self._threads:
+            raise NotFoundError(f"Thread {thread_id} not found")
+        return self._threads[thread_id]
+
+    async def save_thread(self, thread: ThreadMetadata, context: dict) -> None:
+        self._threads[thread.id] = thread
+
+    async def load_threads(
+        self, limit: int, after: Optional[str], order: str, context: dict
+    ) -> Page[ThreadMetadata]:
+        threads = list(self._threads.values())
+        sorted_threads = sorted(threads, key=lambda t: t.created_at, reverse=(order == "desc"))
+        start = 0
+        if after:
+            for idx, t in enumerate(sorted_threads):
+                if t.id == after:
+                    start = idx + 1
+                    break
+        data = sorted_threads[start:start + limit]
+        has_more = start + limit < len(sorted_threads)
+        next_after = data[-1].id if has_more and data else None
+        return Page(data=data, has_more=has_more, after=next_after)
+
+    async def delete_thread(self, thread_id: str, context: dict) -> None:
+        self._threads.pop(thread_id, None)
+        self._items.pop(thread_id, None)
+
+    async def load_thread_items(
+        self, thread_id: str, after: Optional[str], limit: int, order: str, context: dict
+    ) -> Page[ThreadItem]:
+        items = self._items.get(thread_id, [])
+        sorted_items = sorted(items, key=lambda i: i.created_at, reverse=(order == "desc"))
+        start = 0
+        if after:
+            for idx, item in enumerate(sorted_items):
+                if item.id == after:
+                    start = idx + 1
+                    break
+        data = sorted_items[start:start + limit]
+        has_more = start + limit < len(sorted_items)
+        next_after = data[-1].id if has_more and data else None
+        return Page(data=data, has_more=has_more, after=next_after)
+
+    async def add_thread_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+        self._items[thread_id].append(item)
+
+    async def delete_thread_item(self, thread_id: str, item_id: str, context: dict) -> None:
+        if thread_id in self._items:
+            self._items[thread_id] = [i for i in self._items[thread_id] if i.id != item_id]
+
+    async def load_attachment(self, attachment_id: str, context: dict) -> Attachment:
+        if attachment_id not in self._attachments:
+            raise NotFoundError(f"Attachment {attachment_id} not found")
+        return self._attachments[attachment_id]
+
+    async def save_attachment(self, attachment: Attachment, context: dict) -> None:
+        self._attachments[attachment.id] = attachment
+
+    async def delete_attachment(self, attachment_id: str, context: dict) -> None:
+        self._attachments.pop(attachment_id, None)
+
+    async def load_item(self, thread_id: str, item_id: str, context: dict) -> ThreadItem:
+        if thread_id not in self._items:
+            raise NotFoundError(f"Thread {thread_id} not found")
+        for item in self._items[thread_id]:
+            if item.id == item_id:
+                return item
+        raise NotFoundError(f"Item {item_id} not found")
+
+    async def save_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+        if thread_id not in self._items:
+            self._items[thread_id] = []
+        for i, existing in enumerate(self._items[thread_id]):
+            if existing.id == item.id:
+                self._items[thread_id][i] = item
+                return
+        self._items[thread_id].append(item)
 ```
 
 ### Realtime Agent server.py

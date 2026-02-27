@@ -68,8 +68,13 @@ Look for:
 fastapi>=0.109.0
 uvicorn>=0.27.0
 python-dotenv>=1.0.0
-chatkit-python>=0.1.0
-openai-agents>=0.0.3
+openai-chatkit>=1.5.0
+openai-agents>=0.7.0
+```
+
+**IMPORTANT:** The pip package name is `openai-chatkit` (NOT `chatkit-python`). Install with:
+```bash
+pip install openai-chatkit
 ```
 
 Add any agent-specific dependencies found in the agent's requirements.
