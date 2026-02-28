@@ -20,3 +20,7 @@ python-dotenv>=1.0.0
 
 # File upload support
 python-multipart>=0.0.9
+
+# Testing (TDD)
+pytest>=8.0.0
+pytest-asyncio>=0.23.0

@@ -1,0 +1,40 @@
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
+import Card from '@/components/ui/Card'
+
+describe('UI Components', () => {
+  describe('Button', () => {
+    it('renders button with text', () => {
+      render(<Button>Click me</Button>)
+      expect(screen.getByText('Click me')).toBeInTheDocument()
+    })
+
+    it('renders primary variant by default', () => {
+      render(<Button>Primary</Button>)
+      const button = screen.getByText('Primary')
+      expect(button).toHaveClass('bg-blue-600')
+    })
+
+    it('renders secondary variant', () => {
+      render(<Button variant="secondary">Secondary</Button>)
+      const button = screen.getByText('Secondary')
+      expect(button).toHaveClass('bg-gray-200')
+    })
+  })
+
+  describe('Badge', () => {
+    it('renders badge with text', () => {
+      render(<Badge>New</Badge>)
+      expect(screen.getByText('New')).toBeInTheDocument()
+    })
+  })
+
+  describe('Card', () => {
+    it('renders card with children', () => {
+      render(<Card>Card content</Card>)
+      expect(screen.getByText('Card content')).toBeInTheDocument()
+    })
+  })
+})

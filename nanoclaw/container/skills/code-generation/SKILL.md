@@ -1077,3 +1077,246 @@ Client: "Add web search to my FAQ bot"
 7. Update metadata.json (version: 2)
 8. Send updated ZIP to WhatsApp
 ```
+
+---
+
+## ⛔ CRITICAL: TDD + AUTO-VERIFICATION (MANDATORY)
+
+**YOU MUST verify ALL generated code BEFORE delivering to client!**
+
+### Complete Verification Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CODE GENERATION FLOW                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. GENERATE CODE (via IPC templates)                       │
+│              ↓                                              │
+│  2. GENERATE TEST FILES                                     │
+│              ↓                                              │
+│  3. INSTALL DEPENDENCIES                                    │
+│     → pip install -r requirements.txt                       │
+│              ↓                                              │
+│  4. RUN TESTS                                               │
+│     → pytest -v                                             │
+│              ↓                                              │
+│     ┌────────┴────────┐                                     │
+│     ↓                 ↓                                     │
+│  PASS?            FAIL?                                     │
+│     ↓                 ↓                                     │
+│  Continue      ┌──────┴──────┐                              │
+│                ↓             ↓                              │
+│           Read Error    Check Skills                        │
+│                ↓             ↓                              │
+│           Context7      Apply Fix                           │
+│                ↓             ↓                              │
+│           Get Fix       Re-run Tests                        │
+│                └─────────────┘                              │
+│                      ↓                                      │
+│              Loop until PASS                                │
+│                      ↓                                      │
+│  5. START SERVER                                            │
+│     → python main.py                                        │
+│              ↓                                              │
+│  6. TEST HEALTH ENDPOINT                                    │
+│     → curl localhost:8000/health                            │
+│              ↓                                              │
+│     ┌────────┴────────┐                                     │
+│     ↓                 ↓                                     │
+│  WORKS?           ERROR?                                    │
+│     ↓                 ↓                                     │
+│  Continue      Fix → Re-test                                │
+│     ↓                                                       │
+│  7. DELIVER TO CLIENT                                       │
+│     → Only after 100% verification!                         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Backend Test Files (Auto-Generate)
+
+For every backend, generate these test files:
+
+**tests/conftest.py:**
+```python
+"""
+Pytest configuration and fixtures.
+"""
+
+import pytest
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
+
+from main import app
+
+
+@pytest_asyncio.fixture
+async def client():
+    """Async test client for FastAPI app."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+```
+
+**tests/test_health.py:**
+```python
+"""
+Health endpoint tests.
+"""
+
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint(client):
+    """Test health endpoint returns healthy status."""
+    response = await client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
+
+
+@pytest.mark.asyncio
+async def test_root_endpoint(client):
+    """Test root endpoint returns service info."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert "status" in response.json()
+```
+
+**tests/test_store.py:**
+```python
+"""
+Store implementation tests.
+"""
+
+import pytest
+from store import InMemoryStore
+
+
+@pytest.fixture
+def store():
+    """Create fresh store instance."""
+    return InMemoryStore()
+
+
+@pytest.mark.asyncio
+async def test_save_and_load_thread(store):
+    """Test thread save and load."""
+    from chatkit.types import ThreadMetadata
+
+    thread = ThreadMetadata(id="test-1", title="Test Thread")
+    await store.save_thread(thread, context={})
+
+    loaded = await store.load_thread("test-1", context={})
+    assert loaded.id == "test-1"
+
+
+@pytest.mark.asyncio
+async def test_load_threads_pagination(store):
+    """Test thread listing with pagination."""
+    result = await store.load_threads(
+        limit=10,
+        after=None,
+        order="desc",
+        context={}
+    )
+    assert hasattr(result, 'data')
+    assert hasattr(result, 'has_more')
+```
+
+### Frontend Test Files (Auto-Generate)
+
+**__tests__/health.test.ts:**
+```typescript
+import { describe, it, expect } from 'vitest'
+
+describe('Frontend Build', () => {
+  it('should have valid environment', () => {
+    expect(process.env.NODE_ENV).toBeDefined()
+  })
+})
+```
+
+### Error Resolution with Skills + Context7
+
+When tests fail, follow this exact order:
+
+```
+1. READ THE ERROR MESSAGE CAREFULLY
+   → Identify: import error? type error? runtime error?
+
+2. CHECK SKILLS FIRST (MANDATORY)
+   → Re-read: chatkit-fastapi-backend/SKILL.md
+   → Re-read: code-generation/SKILL.md
+   → Skills have UPDATED correct patterns
+
+3. USE CONTEXT7 FOR SDK DOCUMENTATION
+   → Resolve library:
+     context7_resolve_library("openai-chatkit")
+   → Query docs:
+     context7_query_docs(library_id, "error: {paste error}")
+   → Get latest correct implementation
+
+4. APPLY FIX
+   → Use exact code from skills
+   → Or use exact code from Context7
+   → Never guess or use training data!
+
+5. RE-RUN VERIFICATION
+   → pytest -v
+   → python main.py
+   → curl localhost:8000/health
+   → Loop until ALL pass
+```
+
+### Progress Updates (With Verification)
+
+```
+🔄 Code Generation Started
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1/10: Matching template...
+Step 2/10: Loading template files...
+Step 3/10: Generating code with variables...
+Step 4/10: Generating test files...
+Step 5/10: Saving to local storage...
+Step 6/10: Installing dependencies...
+Step 7/10: Running tests...
+Step 8/10: Starting server...
+Step 9/10: Verifying health endpoint...
+Step 10/10: Packaging for delivery...
+
+✅ All Tests Passed!
+✅ Server Running!
+✅ Health Check OK!
+
+📦 Delivering to client...
+```
+
+### If Verification Fails
+
+```
+❌ Test Failed: test_store.py::test_load_threads_pagination
+
+🔍 Analyzing error...
+📚 Checking skills for correct pattern...
+🌐 Querying Context7 for latest docs...
+
+🔧 Fix Applied: Updated load_threads() signature
+
+🔄 Re-running tests...
+✅ All Tests Passed!
+
+Continuing with delivery...
+```
+
+### ⛔ NEVER Skip Verification
+
+```
+❌ FORBIDDEN:
+   Generate → Package → Deliver
+
+✅ REQUIRED:
+   Generate → Test → Verify → Fix if needed → Re-test → Deliver
+```
