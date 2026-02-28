@@ -4,7 +4,7 @@ Output Formatter Agent
 Formats processed {{DOMAIN}} data into {{OUTPUT_TYPE}} format.
 """
 
-from agents_sdk import Agent
+from agents import Agent
 from models.schemas import FormattedOutput
 from config import settings
 

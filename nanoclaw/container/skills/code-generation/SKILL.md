@@ -47,6 +47,29 @@ Generate complete, runnable OpenAI Agents SDK code from AgentConfig and architec
 from chatkit.stores import Store  # WRONG! It's chatkit.store (singular)
 from chatkit.types import AttachmentItem  # WRONG! It's Attachment
 from chatkit.types import ContentItem  # WRONG! Doesn't exist
+
+# ❌ WRONG - OpenAI Agents SDK imports - YOUR TRAINING IS OUTDATED!
+from agents.tools import WebSearchTool      # ❌ WRONG! No agents.tools module!
+from agents.tools import FileSearchTool     # ❌ WRONG! No agents.tools module!
+from agents.tools import CodeInterpreterTool # ❌ WRONG! No agents.tools module!
+from agents_sdk import Agent                 # ❌ WRONG! Package is "agents" not "agents_sdk"!
+from openai_agents import Agent              # ❌ WRONG! Package is "agents"!
+```
+
+### ✅ CORRECT OpenAI Agents SDK Imports:
+
+```python
+# ✅ CORRECT - All tools import directly from "agents" package
+from agents import Agent                    # ✅ CORRECT
+from agents import Runner                   # ✅ CORRECT
+from agents import WebSearchTool            # ✅ CORRECT
+from agents import FileSearchTool           # ✅ CORRECT
+from agents import CodeInterpreterTool      # ✅ CORRECT
+from agents import ImageGenerationTool      # ✅ CORRECT
+from agents import ComputerTool             # ✅ CORRECT
+from agents import HostedMCPTool            # ✅ CORRECT
+from agents import function_tool            # ✅ CORRECT
+from agents import SQLiteSession            # ✅ CORRECT
 ```
 
 ```tsx

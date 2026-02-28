@@ -66,3 +66,22 @@ export const TRIGGER_PATTERN = new RegExp(
 // Uses system timezone by default
 export const TIMEZONE =
   process.env.TZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+// Allowed phone numbers (WhatsApp format with country code)
+// Only these numbers can send messages to the AI Employee
+// Format: Pakistani numbers 03xx → 923xx (country code 92)
+export const ALLOWED_NUMBERS: string[] = [
+  '923492128287',  // 03492128287
+  '923032206662',  // 03032206662
+];
+
+// Helper function to check if a number is allowed
+export function isNumberAllowed(jid: string): boolean {
+  // If ALLOWED_NUMBERS is empty, allow all (disabled)
+  if (ALLOWED_NUMBERS.length === 0) return true;
+
+  // Extract number from JID (e.g., "923492128287@s.whatsapp.net" → "923492128287")
+  const number = jid.replace('@s.whatsapp.net', '').replace('@g.us', '');
+
+  return ALLOWED_NUMBERS.includes(number);
+}

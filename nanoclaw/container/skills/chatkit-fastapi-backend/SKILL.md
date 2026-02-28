@@ -644,3 +644,152 @@ Step 7/7: Packaging files...
 
 🌐 Ready for frontend connection!
 ```
+
+---
+
+## ⛔⛔⛔ TDD (TEST DRIVEN DEVELOPMENT) - MANDATORY! ⛔⛔⛔
+
+**YOU MUST FOLLOW TDD APPROACH FOR ALL BACKEND DEVELOPMENT!**
+
+### ⛔ FORBIDDEN - DO NOT DO THIS:
+
+```
+❌ Write backend code first
+❌ Write tests after code
+❌ Skip test file creation
+❌ Deliver without tests
+❌ Deliver with failing tests
+```
+
+### ✅ REQUIRED - TDD WORKFLOW:
+
+```
+Step 1: WRITE TEST FILE FIRST (test_*.py)
+        ↓
+Step 2: RUN TESTS (pytest -v) - they will FAIL (Red phase)
+        ↓
+Step 3: WRITE BACKEND CODE to make tests pass
+        ↓
+Step 4: RUN TESTS AGAIN (pytest -v)
+        ↓
+Step 5: If ANY test fails → FIX CODE → Go to Step 4
+        ↓
+Step 6: ALL TESTS PASS (Green phase)? → VERIFY
+        ↓
+Step 7: Start server: python main.py
+        ↓
+Step 8: Test health: curl localhost:8000/health
+        ↓
+Step 9: Only after ALL pass → DELIVER
+```
+
+### Backend Test File Structure:
+
+```python
+# tests/test_health.py
+"""
+Tests for health endpoints.
+TDD: Write this file BEFORE writing main.py!
+"""
+
+import pytest
+from httpx import AsyncClient, ASGITransport
+from main import app
+
+@pytest.fixture
+async def client():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+@pytest.mark.asyncio
+async def test_health_endpoint(client):
+    """Test health endpoint returns healthy status."""
+    response = await client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
+
+@pytest.mark.asyncio
+async def test_root_endpoint(client):
+    """Test root endpoint returns service info."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert "service" in response.json()
+```
+
+```python
+# tests/test_store.py
+"""
+Tests for InMemoryStore.
+TDD: Write this file BEFORE writing store.py!
+"""
+
+import pytest
+from store import InMemoryStore
+from chatkit.types import ThreadMetadata
+from datetime import datetime
+
+@pytest.fixture
+def store():
+    return InMemoryStore()
+
+@pytest.mark.asyncio
+async def test_save_and_load_thread(store):
+    """Test thread can be saved and loaded."""
+    thread = ThreadMetadata(id="test-1", created_at=datetime.now())
+    await store.save_thread(thread, context={})
+    loaded = await store.load_thread("test-1", context={})
+    assert loaded.id == "test-1"
+
+@pytest.mark.asyncio
+async def test_load_threads_pagination(store):
+    """Test threads pagination works correctly."""
+    # Create test threads
+    for i in range(5):
+        thread = ThreadMetadata(id=f"thread-{i}", created_at=datetime.now())
+        await store.save_thread(thread, context={})
+
+    # Test pagination
+    page = await store.load_threads(limit=2, after=None, order="desc", context={})
+    assert len(page.data) == 2
+    assert page.has_more == True
+```
+
+### ⛔ DELIVERY BLOCKED UNTIL:
+
+```
+⛔ DO NOT DELIVER if:
+- Test file does not exist (tests/test_*.py)
+- Any test is failing
+- pytest -v has errors
+- Server start fails
+- Health endpoint fails
+
+✅ ONLY DELIVER when:
+- Test files exist for all features
+- ALL tests pass (pytest -v shows all green)
+- Server starts without errors
+- Health endpoint returns {"status": "healthy"}
+```
+
+### Final Verification Loop:
+
+```
+1. Run: pytest -v
+   ↓
+2. ALL tests pass?
+   NO → Fix code → Go to Step 1
+   YES → Continue
+   ↓
+3. Run: python main.py
+   ↓
+4. Server started?
+   NO → Fix code → Go to Step 1
+   YES → Continue
+   ↓
+5. Run: curl localhost:8000/health
+   ↓
+6. Returns {"status": "healthy"}?
+   NO → Fix code → Go to Step 1
+   YES → ✅ READY TO DELIVER!
+```

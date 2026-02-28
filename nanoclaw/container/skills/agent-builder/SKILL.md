@@ -127,6 +127,31 @@ triage_agent = Agent(
 
 ---
 
+## ⛔ FORBIDDEN IMPORTS - YOUR TRAINING DATA IS WRONG!
+
+```python
+# ❌ WRONG - These are from your outdated training data!
+from agents.tools import WebSearchTool      # ❌ WRONG! No agents.tools module!
+from agents.tools import FileSearchTool     # ❌ WRONG! No agents.tools module!
+from agents.tools import CodeInterpreterTool # ❌ WRONG! No agents.tools module!
+from agents_sdk import Agent                 # ❌ WRONG! Package is "agents" not "agents_sdk"!
+from openai_agents import Agent              # ❌ WRONG! Package is "agents"!
+```
+
+### ✅ CORRECT - All imports from "agents" package directly:
+
+```python
+from agents import Agent                    # ✅ CORRECT
+from agents import Runner                   # ✅ CORRECT
+from agents import WebSearchTool            # ✅ CORRECT
+from agents import FileSearchTool           # ✅ CORRECT
+from agents import CodeInterpreterTool      # ✅ CORRECT
+from agents import ImageGenerationTool      # ✅ CORRECT
+from agents import function_tool            # ✅ CORRECT
+```
+
+---
+
 ## Quick Reference: Hosted Tools
 
 | Tool | Import | Use Case |
@@ -379,4 +404,195 @@ After designing architecture, pass to `code-generation` skill with:
     }
   }
 }
+```
+
+---
+
+## ⛔ TDD (Test Driven Development) - MANDATORY!
+
+**YOU MUST FOLLOW TDD APPROACH FOR ALL AGENT DEVELOPMENT!**
+
+TDD means: **Write Tests FIRST, Then Write Code**
+
+### ⛔ FORBIDDEN - DO NOT DO THIS:
+
+```
+❌ Design architecture without test plan
+❌ Skip test file creation
+❌ Deliver architecture without test requirements
+❌ Proceed to code-generation without test specifications
+```
+
+### ✅ REQUIRED - TDD WORKFLOW:
+
+```
+Step 1: DESIGN ARCHITECTURE
+        ↓
+Step 2: CREATE TEST SPECIFICATIONS for each component
+        ↓
+Step 3: INCLUDE TEST REQUIREMENTS in handoff to code-generation
+        ↓
+Step 4: VERIFY code-generation creates test files FIRST
+        ↓
+Step 5: ENSURE all tests pass before delivery
+```
+
+---
+
+## TDD Integration in Agent Architecture
+
+### When Designing Architecture, Include Test Plan:
+
+For EVERY component in your architecture, specify:
+
+1. **Agent Tests** - Test agent behavior and responses
+2. **Tool Tests** - Test custom tools work correctly
+3. **Integration Tests** - Test full agent workflow
+4. **API Tests** - Test FastAPI endpoints
+
+### Test Specification Format:
+
+```json
+{
+  "architecture": {
+    "agent_type": "standard",
+    "tools": ["get_weather"],
+    ...
+  },
+  "test_plan": {
+    "unit_tests": [
+      {
+        "file": "test_tools.py",
+        "tests": [
+          "test_get_weather_returns_data",
+          "test_get_weather_handles_invalid_city",
+          "test_get_weather_timeout"
+        ]
+      }
+    ],
+    "integration_tests": [
+      {
+        "file": "test_agent.py",
+        "tests": [
+          "test_agent_responds_to_weather_query",
+          "test_agent_handles_unknown_query"
+        ]
+      }
+    ],
+    "api_tests": [
+      {
+        "file": "test_api.py",
+        "tests": [
+          "test_health_endpoint",
+          "test_chat_endpoint",
+          "test_chatkit_integration"
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Handoff to code-generation with TDD
+
+When handing off to code-generation, ALWAYS include:
+
+### 1. Test Files to Create FIRST:
+
+```
+tests/
+├── test_tools.py      # Custom tool tests
+├── test_agent.py      # Agent behavior tests
+├── test_api.py        # API endpoint tests
+└── test_store.py      # Store implementation tests (if using ChatKit)
+```
+
+### 2. Test Requirements per Component:
+
+| Component | Required Tests |
+|-----------|----------------|
+| Custom Tools | Input validation, output format, error handling |
+| Agent | Response accuracy, tool usage, edge cases |
+| API Endpoints | Health, chat, streaming, error responses |
+| Store | CRUD operations, pagination, error handling |
+
+### 3. TDD Handoff Example:
+
+```json
+{
+  "architecture": {
+    "agent_type": "standard",
+    "tools": {
+      "custom": ["get_inventory"]
+    }
+  },
+  "tdd_requirements": {
+    "phase": "red",
+    "test_files_first": [
+      {
+        "file": "test_tools.py",
+        "create_before": "tools.py",
+        "tests": [
+          "def test_get_inventory_exists(): ...",
+          "def test_get_inventory_returns_dict(): ...",
+          "def test_get_inventory_handles_empty(): ..."
+        ]
+      },
+      {
+        "file": "test_api.py",
+        "create_before": "main.py",
+        "tests": [
+          "def test_health_returns_200(): ...",
+          "def test_chat_endpoint_exists(): ..."
+        ]
+      }
+    ],
+    "run_tests_command": "pytest -v",
+    "expected_initial_result": "FAIL (Red phase - tests before code)"
+  }
+}
+```
+
+---
+
+## ⛔ DELIVERY BLOCKED UNTIL:
+
+```
+⛔ DO NOT proceed to code-generation if:
+- Test plan is not included in architecture
+- Test specifications are missing
+- No test files listed in handoff
+
+✅ ONLY handoff when:
+- Architecture includes test_plan section
+- Every component has test specifications
+- TDD phase is clearly marked (red/green)
+- Test files are listed to create FIRST
+```
+
+---
+
+## Final Verification Before Handoff
+
+Before handing off to code-generation, verify:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              AGENT-BUILDER TDD CHECKLIST                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  [ ] Architecture design complete                           │
+│  [ ] Test plan included in handoff                          │
+│  [ ] Test files listed (test_*.py)                          │
+│  [ ] Each component has test specifications                 │
+│  [ ] TDD phase marked (start with "red")                    │
+│  [ ] test_files_first array populated                       │
+│  [ ] Expected test results documented                       │
+│                                                              │
+│  If ANY item unchecked → DO NOT proceed to code-generation  │
+│  If ALL items checked → Handoff to code-generation          │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
 ```

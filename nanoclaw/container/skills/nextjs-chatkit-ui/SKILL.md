@@ -555,3 +555,207 @@ Step 10/10: Saving and packaging...
 💡 Customize colors in tailwind.config.ts
 💬 Chat widget appears in bottom-right corner
 ```
+
+---
+
+## ⛔⛔⛔ TDD (TEST DRIVEN DEVELOPMENT) - MANDATORY! ⛔⛔⛔
+
+**YOU MUST FOLLOW TDD APPROACH FOR ALL FRONTEND DEVELOPMENT!**
+
+### ⛔ FORBIDDEN - DO NOT DO THIS:
+
+```
+❌ Write component code first
+❌ Write tests after code
+❌ Skip test file creation
+❌ Deliver without tests
+❌ Deliver with failing tests
+❌ Deliver without npm run build passing
+```
+
+### ✅ REQUIRED - TDD WORKFLOW:
+
+```
+Step 1: WRITE TEST FILE FIRST (__tests__/*.test.tsx)
+        ↓
+Step 2: RUN TESTS (npm test) - they will FAIL (Red phase)
+        ↓
+Step 3: WRITE COMPONENT CODE to make tests pass
+        ↓
+Step 4: RUN TESTS AGAIN (npm test)
+        ↓
+Step 5: If ANY test fails → FIX CODE → Go to Step 4
+        ↓
+Step 6: ALL TESTS PASS (Green phase)? → VERIFY
+        ↓
+Step 7: Run: npm run build
+        ↓
+Step 8: Build successful? → DELIVER
+```
+
+### Frontend Test File Structure:
+
+```typescript
+// __tests__/components/ChatWidget.test.tsx
+/**
+ * Tests for ChatWidget component.
+ * TDD: Write this file BEFORE writing ChatWidget.tsx!
+ */
+
+import { render, screen, fireEvent } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import ChatWidget from '@/components/chat/ChatWidget'
+
+describe('ChatWidget', () => {
+  it('renders chat button', () => {
+    render(<ChatWidget />)
+    const button = screen.getByRole('button')
+    expect(button).toBeInTheDocument()
+  })
+
+  it('opens chat panel when button clicked', () => {
+    render(<ChatWidget />)
+    const button = screen.getByRole('button')
+    fireEvent.click(button)
+    // Panel should be visible after click
+  })
+
+  it('closes chat panel when close button clicked', () => {
+    render(<ChatWidget />)
+    const button = screen.getByRole('button')
+    fireEvent.click(button) // Open
+    fireEvent.click(button) // Close
+    // Panel should be hidden
+  })
+})
+```
+
+```typescript
+// __tests__/components/Header.test.tsx
+/**
+ * Tests for Header component.
+ * TDD: Write this file BEFORE writing Header.tsx!
+ */
+
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import { Header } from '@/components/layout/Header'
+
+describe('Header', () => {
+  it('renders site logo/name', () => {
+    render(<Header />)
+    // Check for logo or site name
+  })
+
+  it('renders navigation links', () => {
+    render(<Header />)
+    // Check for nav links
+  })
+
+  it('is responsive', () => {
+    render(<Header />)
+    // Check mobile menu button exists
+  })
+})
+```
+
+```typescript
+// __tests__/pages/Home.test.tsx
+/**
+ * Tests for Home page.
+ * TDD: Write this file BEFORE writing page.tsx!
+ */
+
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import HomePage from '@/app/page'
+
+describe('HomePage', () => {
+  it('renders hero section', () => {
+    render(<HomePage />)
+    // Check for hero title
+  })
+
+  it('renders features section', () => {
+    render(<HomePage />)
+    // Check for features
+  })
+
+  it('renders CTA section', () => {
+    render(<HomePage />)
+    // Check for call-to-action
+  })
+})
+```
+
+### Test Dependencies (add to package.json devDependencies):
+
+```json
+{
+  "devDependencies": {
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "vitest": "^1.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
+  }
+}
+```
+
+### Vitest Configuration:
+
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./vitest.setup.ts'],
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './'),
+    },
+  },
+})
+```
+
+```typescript
+// vitest.setup.ts
+import '@testing-library/jest-dom'
+```
+
+### ⛔ DELIVERY BLOCKED UNTIL:
+
+```
+⛔ DO NOT DELIVER if:
+- Test files do not exist (__tests__/*.test.tsx)
+- Any test is failing
+- npm test has errors
+- npm run build fails
+
+✅ ONLY DELIVER when:
+- Test files exist for key components
+- ALL tests pass (npm test shows all green)
+- npm run build succeeds
+```
+
+### Final Verification Loop:
+
+```
+1. Run: npm test
+   ↓
+2. ALL tests pass?
+   NO → Fix code → Go to Step 1
+   YES → Continue
+   ↓
+3. Run: npm run build
+   ↓
+4. Build successful?
+   NO → Fix code → Go to Step 1
+   YES → ✅ READY TO DELIVER!
+```
