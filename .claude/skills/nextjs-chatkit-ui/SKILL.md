@@ -62,6 +62,55 @@ return <ChatKit control={control} className="h-full w-full" />;
 
 ---
 
+## ⛔⛔⛔ MANDATORY TDD - 4 LEVELS (NO EXCEPTIONS!) ⛔⛔⛔
+
+**ALL generated frontend code MUST pass 4-Level TDD testing before delivery!**
+
+### TDD Commands for Frontend:
+
+```bash
+# LEVEL 1: TypeScript Syntax (MUST PASS - BLOCKS DELIVERY!)
+npx tsc --noEmit
+
+# LEVEL 2: Unit Tests (MUST PASS - BLOCKS DELIVERY!)
+npm test
+
+# LEVEL 3: Build (MUST PASS - BLOCKS DELIVERY!)
+npm run build
+
+# LEVEL 4: Dev Server (RECOMMENDED - NOTIFY ISSUES)
+npm run dev &
+sleep 5 && curl localhost:3000
+```
+
+### Quick Manual TDD Check:
+
+```bash
+# Level 1: TypeScript compiles?
+npx tsc --noEmit && echo "PASS"
+
+# Level 2: Tests pass?
+npm test --passWithNoTests && echo "PASS"
+
+# Level 3: Builds successfully?
+npm run build && echo "PASS"
+
+# Level 4: Runs?
+npm run dev &
+sleep 5 && curl localhost:3000
+```
+
+### Delivery Rules:
+
+```
+Level 1 FAIL → STOP! Fix TypeScript errors
+Level 2 FAIL → STOP! Fix test failures
+Level 3 FAIL → STOP! Fix build errors
+Level 4 FAIL → NOTIFY client of known issues
+```
+
+---
+
 ## When to Use This Skill
 
 Use this skill when:

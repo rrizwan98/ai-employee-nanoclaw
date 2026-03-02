@@ -46,17 +46,212 @@ Your training data for ChatKit, OpenAI Agents SDK, and related libraries is **OU
 ✅ Call IPC template tools → Generate code from templates
 ✅ Call Context7 → Verify SDK patterns before delivery
 ✅ Write TEST FILE FIRST → Before any feature code (TDD)
-✅ Run tests → Must ALL pass before delivery
-✅ Deliver template output AS-IS
+✅ Call validate_project_code IPC → BEFORE delivery (ALL code!)
+✅ Deliver ONLY if validation passes
 ```
 
 ---
 
-## ⛔⛔⛔ TDD (TEST DRIVEN DEVELOPMENT) - MANDATORY! ⛔⛔⛔
+## ⛔⛔⛔ NEW: validate_project_code IPC TOOL - MANDATORY! ⛔⛔⛔
+
+**YOU MUST CALL THIS IPC TOOL BEFORE EVERY DELIVERY!**
+
+Whether you use templates OR write manual code, call this tool:
+
+### IPC Request:
+
+```json
+{
+  "operation": "validate_project_code",
+  "params": {
+    "project_path": "/workspace/client-agents/{jid}/{project}/backend",
+    "project_type": "backend",
+    "run_level_3": true,
+    "run_level_4": false
+  }
+}
+```
+
+### IPC Response (Success):
+
+```json
+{
+  "success": true,
+  "result": {
+    "tdd_validation": {
+      "success": true,
+      "level1": { "passed": true, "errors": [] },
+      "level2": { "passed": true, "errors": [] },
+      "level3": { "passed": true, "errors": [] },
+      "level4": { "passed": true, "errors": [] }
+    },
+    "delivery_decision": "✅ SAFE TO DELIVER - Level 1-2 passed"
+  }
+}
+```
+
+### IPC Response (Failure - DO NOT DELIVER!):
+
+```json
+{
+  "success": false,
+  "error": "⛔ TDD VALIDATION FAILED - DO NOT DELIVER!",
+  "result": {
+    "tdd_validation": {
+      "success": false,
+      "level1": { "passed": false, "errors": ["SyntaxError..."] },
+      "level2": { "passed": false, "errors": ["ImportError..."] }
+    },
+    "delivery_decision": "⛔ DO NOT DELIVER - Level 1 or 2 failed"
+  }
+}
+```
+
+### When to Call:
+
+```
+✅ ALWAYS call before packaging ZIP
+✅ ALWAYS call before sending to WhatsApp
+✅ ALWAYS call for template-generated code
+✅ ALWAYS call for manually-written code
+✅ ALWAYS call for existing project updates
+```
+
+### If Validation Fails:
+
+```
+1. Read the error messages
+2. Fix the code
+3. Call validate_project_code AGAIN
+4. Repeat until success: true
+5. ONLY THEN deliver
+```
+
+---
+
+## ⛔⛔⛔ TDD (TEST DRIVEN DEVELOPMENT) - MANDATORY FOR ALL CODE! ⛔⛔⛔
 
 **YOU MUST FOLLOW TDD APPROACH FOR ALL DEVELOPMENT!**
 
 TDD means: **Write Tests FIRST, Then Write Code**
+
+### 4-LEVEL TDD TESTING SYSTEM (ALL CODE MUST PASS!)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              MANDATORY 4-LEVEL TDD TESTING                       │
+│        (Applies to TEMPLATE code AND MANUAL code!)              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  LEVEL 1: SYNTAX TESTS (MUST PASS - BLOCKS DELIVERY)           │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━              │
+│  • ast.parse() succeeds on all .py files                        │
+│  • No unresolved {{VARIABLES}} in code                          │
+│  • Valid Python syntax                                          │
+│  Run: pytest -m level1 -v                                       │
+│                          ↓                                       │
+│  LEVEL 2: IMPORT TESTS (MUST PASS - BLOCKS DELIVERY)           │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━              │
+│  • from agents import Agent, Runner → works                     │
+│  • from chatkit.store import Store → works                      │
+│  • All imports resolve without errors                           │
+│  Run: pytest -m level2 -v                                       │
+│                          ↓                                       │
+│  LEVEL 3: RUNTIME TESTS (SHOULD PASS - WARNS IF FAIL)          │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━              │
+│  • Agent initializes without error                              │
+│  • Tools are callable                                           │
+│  • Handoffs configured (if multi-agent)                         │
+│  • Server starts on test port                                   │
+│  Run: pytest -m level3 --use-sandbox -v                         │
+│                          ↓                                       │
+│  LEVEL 4: INTEGRATION TESTS (RECOMMENDED - WARNS IF FAIL)      │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━              │
+│  • Health endpoint: {"status": "healthy"}                       │
+│  • CORS allows frontend origin                                  │
+│  • ChatKit endpoint responds                                    │
+│  • Session persistence works                                    │
+│  Run: pytest -m level4 --use-sandbox -v                         │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### AUTOMATIC VS MANUAL TDD ENFORCEMENT:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  CODE TYPE              │  TDD ENFORCEMENT                      │
+├─────────────────────────────────────────────────────────────────┤
+│                         │                                        │
+│  TEMPLATE-BASED CODE    │  AUTOMATIC - IPC runs Level 1-2       │
+│  (generate_from_template│  If fail → IPC returns ERROR          │
+│   IPC calls)            │  Code NOT delivered automatically     │
+│                         │                                        │
+├─────────────────────────────────────────────────────────────────┤
+│                         │                                        │
+│  MANUAL CODE            │  YOU MUST RUN TESTS MANUALLY!         │
+│  (existing project      │  Use the TDD commands below           │
+│   updates, custom code) │  DO NOT DELIVER without ALL passing!  │
+│                         │                                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### TDD COMMANDS FOR MANUAL CODE (COPY-PASTE THESE!):
+
+```bash
+# Navigate to project directory
+cd /workspace/client-agents/{jid}/{project}/backend
+
+# LEVEL 1: SYNTAX TESTS (MUST PASS!)
+python -c "
+import ast, glob, sys
+for pyfile in glob.glob('*.py'):
+    try:
+        with open(pyfile) as f: ast.parse(f.read())
+        print(f'[PASS] {pyfile}')
+    except SyntaxError as e:
+        print(f'[FAIL] {pyfile}: {e}')
+        sys.exit(1)
+print('Level 1: ALL SYNTAX TESTS PASSED')
+"
+
+# LEVEL 2: IMPORT TESTS (MUST PASS!)
+python -c "
+import sys, importlib.util, glob
+try:
+    from agents import Agent, Runner
+    print('[PASS] OpenAI Agents SDK imports')
+except ImportError as e:
+    print(f'[FAIL] SDK imports: {e}'); sys.exit(1)
+
+for pyfile in glob.glob('*.py'):
+    module_name = pyfile[:-3]
+    try:
+        spec = importlib.util.spec_from_file_location(module_name, pyfile)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        print(f'[PASS] {pyfile}')
+    except Exception as e:
+        print(f'[FAIL] {pyfile}: {e}'); sys.exit(1)
+print('Level 2: ALL IMPORT TESTS PASSED')
+"
+
+# LEVEL 3: RUNTIME TESTS (SHOULD PASS!)
+python -c "
+from agents_config import agent
+print(f'[PASS] Agent: {agent.name}')
+print(f'[PASS] Tools: {len(agent.tools)} configured')
+if hasattr(agent, 'handoffs') and agent.handoffs:
+    print(f'[PASS] Handoffs: {[h.name for h in agent.handoffs]}')
+print('Level 3: RUNTIME TESTS PASSED')
+"
+
+# LEVEL 4: INTEGRATION TEST (Server starts + health check)
+timeout 10 python main.py &
+sleep 5
+curl http://localhost:8000/health
+# Expected: {"status": "healthy"}
+```
 
 ### ⛔ FORBIDDEN - DO NOT DO THIS:
 
@@ -66,6 +261,8 @@ TDD means: **Write Tests FIRST, Then Write Code**
 ❌ Skip test file creation
 ❌ Deliver without tests
 ❌ Deliver with failing tests
+❌ Skip Level 1-2 tests (these BLOCK delivery!)
+❌ Ignore Level 3-4 warnings
 ```
 
 ### ✅ REQUIRED - TDD WORKFLOW:
@@ -77,11 +274,31 @@ Step 2: RUN TESTS (they will FAIL - this is expected!)
         ↓
 Step 3: WRITE FEATURE CODE to make tests pass
         ↓
-Step 4: RUN TESTS AGAIN
+Step 4: RUN ALL 4 LEVELS OF TDD TESTS
         ↓
-Step 5: If ANY test fails → FIX CODE → Go to Step 4
+Step 5: If Level 1-2 fails → FIX CODE IMMEDIATELY (BLOCKS DELIVERY!)
         ↓
-Step 6: ALL TESTS PASS? → Only then DELIVER
+Step 6: If Level 3-4 fails → FIX CODE OR WARN CLIENT
+        ↓
+Step 7: ALL LEVEL 1-2 PASS? → Safe to DELIVER
+```
+
+### ⛔ DELIVERY BLOCKED IF:
+
+```
+Level 1 FAIL → STOP! Fix syntax errors before delivery
+Level 2 FAIL → STOP! Fix import errors before delivery
+Level 3 FAIL → WARNING! Fix runtime issues if possible
+Level 4 FAIL → WARNING! Notify client of known issues
+```
+
+### ✅ ONLY DELIVER WHEN:
+
+```
+Level 1 PASS (100% REQUIRED)
+Level 2 PASS (100% REQUIRED)
+Level 3 PASS (recommended)
+Level 4 PASS (recommended)
 ```
 
 ---
@@ -135,20 +352,49 @@ If false → Go to Backend TDD Workflow
 6. match_template(request) → Get template name
 7. load_template(name) → Get template files
 8. generate_from_template(name, variables) → Generate code
+   (Note: IPC auto-runs Level 1-2 tests!)
 9. Write feature code to make tests pass
 10. Run tests: pytest -v
 11. If tests FAIL → Fix code → Run tests again
 12. Repeat until ALL tests PASS (Green)
 ```
 
-### Phase 3: VERIFY (Final Check)
+### Phase 3: 4-LEVEL TDD VERIFICATION (MANDATORY!)
 
 ```
-13. Run ALL tests one final time: pytest -v
-14. Start server: python main.py
-15. Test health: curl localhost:8000/health
-16. If ANY error → Fix → Re-test from Step 13
-17. Only after ALL pass → Deliver to client
+13. LEVEL 1: pytest -m level1 -v
+    → Must ALL pass! (Blocks delivery if fail)
+
+14. LEVEL 2: pytest -m level2 -v
+    → Must ALL pass! (Blocks delivery if fail)
+
+15. LEVEL 3: pytest -m level3 --use-sandbox -v
+    → Should pass (Warn client if fail)
+
+16. LEVEL 4: pytest -m level4 --use-sandbox -v
+    → Recommended (Notify if integration issues)
+
+17. If Level 1-2 fail → FIX CODE → Go to Step 13
+18. If Level 3-4 fail → FIX OR WARN CLIENT
+19. Only after Level 1-2 100% PASS → Deliver to client
+```
+
+### FOR MANUAL CODE (No Template): RUN THESE COMMANDS!
+
+```bash
+# LEVEL 1: Syntax (MUST PASS)
+python -c "import ast,glob,sys; [print(f'[PASS] {f}') if not exec(ast.parse(open(f).read())) else 0 for f in glob.glob('*.py')]"
+
+# LEVEL 2: Imports (MUST PASS)
+python -c "from agents import Agent,Runner; print('[PASS] SDK imports')"
+python -c "import agents_config; print(f'[PASS] Agent: {agents_config.agent.name}')"
+
+# LEVEL 3: Runtime (SHOULD PASS)
+python -c "from agents_config import agent; print(f'Tools: {len(agent.tools)}'); print(f'Handoffs: {[h.name for h in agent.handoffs] if agent.handoffs else \"none\"}')"
+
+# LEVEL 4: Integration (RECOMMENDED)
+timeout 10 python main.py &
+sleep 5 && curl localhost:8000/health
 ```
 
 ### Backend Test File Structure:
@@ -203,19 +449,52 @@ def test_feature_error_handling():
 6. match_frontend_template(request) → Get template name
 7. load_frontend_template(name) → Get template files
 8. generate_frontend_from_template(name, variables) → Generate code
+   (Note: IPC auto-runs Level 1-2 tests!)
 9. Write component code to make tests pass
 10. Run tests: npm test
 11. If tests FAIL → Fix code → Run tests again
 12. Repeat until ALL tests PASS (Green)
 ```
 
-### Phase 3: VERIFY (Final Check)
+### Phase 3: 4-LEVEL TDD VERIFICATION (MANDATORY!)
 
 ```
-13. Run ALL tests one final time: npm test
-14. Build project: npm run build
-15. If ANY error → Fix → Re-test from Step 13
-16. Only after ALL pass → Deliver to client
+13. LEVEL 1: Syntax Check
+    npx tsc --noEmit
+    → Must pass! (Blocks delivery if fail)
+
+14. LEVEL 2: Import Check
+    npm test --passWithNoTests
+    → Must pass! (Blocks delivery if fail)
+
+15. LEVEL 3: Build Check (CRITICAL!)
+    npm run build
+    → Must succeed! (Blocks delivery if fail)
+
+16. LEVEL 4: Integration Check
+    npm run dev & sleep 5 && curl localhost:3000
+    → Should work (Notify if issues)
+
+17. If Level 1-3 fail → FIX CODE → Go to Step 13
+18. If Level 4 fails → FIX OR WARN CLIENT
+19. Only after Level 1-3 100% PASS → Deliver to client
+```
+
+### FOR MANUAL FRONTEND CODE: RUN THESE COMMANDS!
+
+```bash
+# LEVEL 1: TypeScript Syntax (MUST PASS)
+npx tsc --noEmit
+
+# LEVEL 2: Unit Tests (MUST PASS)
+npm test
+
+# LEVEL 3: Build (MUST PASS!)
+npm run build
+
+# LEVEL 4: Dev Server (RECOMMENDED)
+npm run dev &
+sleep 5 && curl localhost:3000
 ```
 
 ### Frontend Test File Structure:
@@ -252,60 +531,154 @@ describe('<FeatureName>', () => {
 
 ---
 
-## ⛔ DELIVERY BLOCKED UNTIL:
+## ⛔ DELIVERY BLOCKED UNTIL ALL 4 LEVELS VERIFIED:
+
+> **🤖 AUTOMATIC ENFORCEMENT**: The IPC `generate_from_template` now runs Level 1-2 tests automatically. If tests fail, the operation BLOCKS and returns an error.
+>
+> **For MANUAL code (existing project updates), YOU must run ALL 4 levels manually!**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│         DELIVERY REQUIREMENTS BY TDD LEVEL                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  LEVEL 1: SYNTAX (MUST PASS - BLOCKS DELIVERY!)                 │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                   │
+│  ⛔ DO NOT DELIVER if Level 1 fails                             │
+│  Backend: pytest -m level1 -v                                   │
+│  Frontend: npx tsc --noEmit                                     │
+│                                                                  │
+│  LEVEL 2: IMPORTS (MUST PASS - BLOCKS DELIVERY!)               │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                   │
+│  ⛔ DO NOT DELIVER if Level 2 fails                             │
+│  Backend: pytest -m level2 -v                                   │
+│  Frontend: npm test                                             │
+│                                                                  │
+│  LEVEL 3: RUNTIME (SHOULD PASS - WARN CLIENT IF FAIL)          │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                   │
+│  ⚠️  Can deliver with warning if Level 3 fails                  │
+│  Backend: pytest -m level3 --use-sandbox -v                     │
+│  Frontend: npm run build                                        │
+│                                                                  │
+│  LEVEL 4: INTEGRATION (RECOMMENDED - NOTIFY ISSUES)            │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                   │
+│  ℹ️  Can deliver but notify client of known issues              │
+│  Backend: pytest -m level4 --use-sandbox -v                     │
+│  Frontend: npm run dev (server accessible?)                     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ```
 ⛔ DO NOT DELIVER if:
-- Test file does not exist
-- Any test is failing
-- pytest/npm test has errors
-- Build has errors
-- Health endpoint fails
+- Level 1 (Syntax) fails
+- Level 2 (Import) fails
+- Test file does not exist for new features
 
-✅ ONLY DELIVER when:
-- Test file exists for every new feature
-- ALL tests pass (pytest -v shows all green)
-- Build succeeds (npm run build)
-- Health endpoint returns {"status": "healthy"}
+⚠️ CAN DELIVER WITH WARNING if:
+- Level 3 (Runtime) fails → Document known issues
+- Level 4 (Integration) fails → Notify client
+
+✅ SAFE TO DELIVER when:
+- Level 1 100% PASS (syntax valid)
+- Level 2 100% PASS (imports work)
+- Level 3 passes (or documented warning)
+- Level 4 passes (or notified issues)
+
+🤖 AUTOMATIC CHECKS (Level 1-2):
+- Level 1 (Syntax): Template variables substituted, valid Python syntax
+- Level 2 (Import): SDK imports work, no ModuleNotFoundError
+- If either fails → IPC returns error, code NOT delivered
 ```
 
 ---
 
-## Final Verification Loop (MANDATORY)
+## Final 4-Level TDD Verification Loop (MANDATORY!)
 
-Before ANY delivery, run this loop:
+Before ANY delivery, run this complete 4-Level verification loop:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   FINAL VERIFICATION LOOP                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  1. Run: pytest -v (backend) OR npm test (frontend)         │
-│                          ↓                                   │
-│  2. Check: ALL tests pass?                                  │
-│         ↓ NO                    ↓ YES                       │
-│  ┌──────────────┐        ┌──────────────┐                   │
-│  │ READ ERROR   │        │ CONTINUE     │                   │
-│  │ CHECK SKILLS │        │ TO STEP 3    │                   │
-│  │ USE CONTEXT7 │        └──────────────┘                   │
-│  │ FIX CODE     │               ↓                           │
-│  │ GO TO STEP 1 │        3. Run: python main.py / npm build │
-│  └──────────────┘               ↓                           │
-│                          4. Check: Build successful?        │
-│                               ↓ NO        ↓ YES             │
-│                          ┌──────────┐  ┌──────────┐         │
-│                          │ FIX CODE │  │ CONTINUE │         │
-│                          │ GO TO 1  │  │ TO STEP 5│         │
-│                          └──────────┘  └──────────┘         │
-│                                              ↓              │
-│                          5. Test: curl health endpoint      │
-│                               ↓ FAIL      ↓ PASS            │
-│                          ┌──────────┐  ┌──────────┐         │
-│                          │ FIX CODE │  │ ✅ READY │         │
-│                          │ GO TO 1  │  │ DELIVER! │         │
-│                          └──────────┘  └──────────┘         │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│           FINAL 4-LEVEL TDD VERIFICATION LOOP                    │
+│           (MANDATORY FOR ALL CODE - NO EXCEPTIONS!)             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  LEVEL 1: SYNTAX TESTS (BLOCKS DELIVERY IF FAIL!)              │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━               │
+│  Backend: pytest -m level1 -v                                   │
+│  Frontend: npx tsc --noEmit                                     │
+│                          ↓                                       │
+│  ALL PASS?  ↓ NO → FIX CODE → RETRY                            │
+│             ↓ YES                                               │
+│                                                                  │
+│  LEVEL 2: IMPORT TESTS (BLOCKS DELIVERY IF FAIL!)              │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━               │
+│  Backend: pytest -m level2 -v                                   │
+│  Frontend: npm test                                             │
+│                          ↓                                       │
+│  ALL PASS?  ↓ NO → CHECK SKILLS → USE CONTEXT7 → FIX → RETRY   │
+│             ↓ YES                                               │
+│                                                                  │
+│  LEVEL 3: RUNTIME TESTS (FIX IF POSSIBLE)                      │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━               │
+│  Backend: pytest -m level3 --use-sandbox -v                     │
+│           python main.py (server starts?)                       │
+│  Frontend: npm run build                                        │
+│                          ↓                                       │
+│  ALL PASS?  ↓ NO → FIX IF POSSIBLE → WARN CLIENT IF NOT        │
+│             ↓ YES                                               │
+│                                                                  │
+│  LEVEL 4: INTEGRATION TESTS (NOTIFY IF ISSUES)                 │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━               │
+│  Backend: curl localhost:8000/health → {"status":"healthy"}    │
+│           pytest -m level4 --use-sandbox -v                     │
+│  Frontend: npm run dev → localhost:3000 accessible             │
+│                          ↓                                       │
+│  ALL PASS?  ↓ NO → NOTIFY CLIENT OF KNOWN ISSUES               │
+│             ↓ YES                                               │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              DELIVERY DECISION                           │   │
+│  ├──────────────────────────────────────────────────────────┤   │
+│  │ Level 1 PASS + Level 2 PASS → SAFE TO DELIVER            │   │
+│  │ Level 3 FAIL → DELIVER WITH WARNING                      │   │
+│  │ Level 4 FAIL → DELIVER BUT NOTIFY ISSUES                 │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Quick 4-Level TDD Commands (COPY-PASTE!):
+
+**Backend - MANDATORY tests before delivery:**
+```bash
+# Level 1+2 (MUST PASS - BLOCKS DELIVERY!)
+pytest -m "level1 or level2" -v
+
+# Level 3+4 (SHOULD PASS - WARN IF FAIL)
+pytest -m "level3 or level4" --use-sandbox -v
+
+# Or run individually:
+pytest -m level1 -v   # Syntax
+pytest -m level2 -v   # Imports
+pytest -m level3 --use-sandbox -v   # Runtime
+pytest -m level4 --use-sandbox -v   # Integration
+```
+
+**Frontend - MANDATORY tests before delivery:**
+```bash
+# Level 1: TypeScript Syntax (MUST PASS!)
+npx tsc --noEmit
+
+# Level 2: Unit Tests (MUST PASS!)
+npm test
+
+# Level 3: Build (SHOULD PASS!)
+npm run build
+
+# Level 4: Dev Server (RECOMMENDED)
+npm run dev &
+sleep 5 && curl localhost:3000
 ```
 
 ---

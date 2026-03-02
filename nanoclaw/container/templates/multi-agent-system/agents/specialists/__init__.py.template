@@ -2,12 +2,12 @@
 {{SYSTEM_NAME}} Specialist Agents
 Domain-specific agents that handle specialized tasks.
 """
-{{#each SPECIALIST_NAMES}}
-from .{{this}} import {{this}}_agent
-{{/each}}
+from .researcher import researcher_agent
+from .writer import writer_agent
+from .reviewer import reviewer_agent
 
 __all__ = [
-{{#each SPECIALIST_NAMES}}
-    "{{this}}_agent",
-{{/each}}
+    "researcher_agent",
+    "writer_agent",
+    "reviewer_agent",
 ]

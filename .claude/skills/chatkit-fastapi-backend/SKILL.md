@@ -44,6 +44,53 @@ OpenAI Agents:   /openai/openai-agents-python
 
 ---
 
+## ⛔⛔⛔ MANDATORY TDD - 4 LEVELS (NO EXCEPTIONS!) ⛔⛔⛔
+
+**ALL generated backend code MUST pass 4-Level TDD testing before delivery!**
+
+### TDD Commands for Backend:
+
+```bash
+# LEVEL 1: Syntax (MUST PASS - BLOCKS DELIVERY!)
+pytest -m level1 -v
+
+# LEVEL 2: Imports (MUST PASS - BLOCKS DELIVERY!)
+pytest -m level2 -v
+
+# LEVEL 3: Runtime (SHOULD PASS - WARN IF FAIL)
+pytest -m level3 --use-sandbox -v
+
+# LEVEL 4: Integration (RECOMMENDED - NOTIFY ISSUES)
+pytest -m level4 --use-sandbox -v
+```
+
+### Quick Manual TDD Check:
+
+```bash
+# Level 1+2 combined (MUST PASS!)
+python -c "import ast,glob,sys; [ast.parse(open(f).read()) for f in glob.glob('*.py')]"
+python -c "from agents import Agent; from chatkit.store import Store; print('PASS')"
+
+# Level 3: Server starts?
+python main.py &
+sleep 5 && curl localhost:8000/health
+
+# Level 4: Health check?
+curl localhost:8000/health
+# Expected: {"status": "healthy"}
+```
+
+### Delivery Rules:
+
+```
+Level 1 FAIL → STOP! Fix syntax errors
+Level 2 FAIL → STOP! Fix import errors
+Level 3 FAIL → WARN client, fix if possible
+Level 4 FAIL → NOTIFY client of known issues
+```
+
+---
+
 ## When to Use This Skill
 
 Use this skill when:

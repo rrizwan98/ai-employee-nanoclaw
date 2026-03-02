@@ -58,7 +58,7 @@ async def get_status():
         system_name="{{SYSTEM_NAME}}",
         domain="{{DOMAIN}}",
         orchestrator="{{ORCHESTRATOR_NAME}}",
-        specialists=[{{#each SPECIALIST_NAMES}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}],
+        specialists={{SPECIALIST_NAMES_LIST}},
         active_sessions=len(set(c.get("session_id", "default") for c in conversations)),
         total_tasks=len(tasks)
     )
@@ -107,12 +107,9 @@ async def root():
             "role": "Central coordinator that delegates to specialists"
         },
         "specialists": [
-{{#each SPECIALIST_NAMES}}
-            {
-                "name": "{{this}}_agent",
-                "description": "Specialist for {{this}} tasks"
-            }{{#unless @last}},{{/unless}}
-{{/each}}
+            {"name": "researcher_agent", "description": "Specialist for research tasks"},
+            {"name": "writer_agent", "description": "Specialist for writing tasks"},
+            {"name": "reviewer_agent", "description": "Specialist for review tasks"}
         ],
         "endpoints": {
             "chatkit": "/chatkit/*",

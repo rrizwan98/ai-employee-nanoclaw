@@ -29,12 +29,12 @@ class Settings(BaseSettings):
 
     # Specialist agent configuration
     SPECIALIST_COUNT: int = {{SPECIALIST_COUNT}}
-    SPECIALIST_NAMES: List[str] = [{{#each SPECIALIST_NAMES}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}]
+    SPECIALIST_NAMES: List[str] = {{SPECIALIST_NAMES_LIST}}
 
-    # Agent customization
-{{#each SPECIALIST_NAMES}}
-    {{upper this}}_INSTRUCTIONS: str = "Specialist agent for {{this}} tasks in the {{../DOMAIN}} domain."
-{{/each}}
+    # Agent customization (set via environment variables)
+    RESEARCHER_INSTRUCTIONS: str = "Specialist agent for research tasks in the {{DOMAIN}} domain."
+    WRITER_INSTRUCTIONS: str = "Specialist agent for writing tasks in the {{DOMAIN}} domain."
+    REVIEWER_INSTRUCTIONS: str = "Specialist agent for review tasks in the {{DOMAIN}} domain."
 
     # Context configuration
     MAX_CONTEXT_HISTORY: int = 100

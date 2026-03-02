@@ -492,14 +492,112 @@ from agents import Agent
 from agents import WebSearchTool
 ```
 
-### Step 5: Validation
+### Step 5: TDD Validation (MANDATORY - 4-Level Testing)
 
-Before packaging, validate:
+**CRITICAL**: Before delivery, ALL generated code MUST pass the 4-Level TDD tests.
 
-- [ ] All imports resolve correctly
-- [ ] No placeholder variables remain (`{{...}}`)
-- [ ] Required files exist (main.py, requirements.txt)
-- [ ] Dockerfile builds successfully (if docker deployment)
+#### Level 1: Syntax Tests (~5 seconds)
+```bash
+pytest -m level1 -v
+```
+Validates:
+- Template rendering completed
+- All variables substituted (no `{{VARIABLE}}` remaining)
+- Valid Python syntax (ast.parse succeeds)
+- No template placeholders in output
+
+#### Level 2: Import Tests (~15 seconds)
+```bash
+pytest -m level2 -v
+```
+Validates:
+- OpenAI Agents SDK imports work (`from agents import Agent, Runner`)
+- Tool instantiation signatures are correct
+- ChatKit imports use singular `chatkit.store` (NOT `chatkit.stores`)
+- FastAPI and Pydantic imports resolve
+- Typing imports present when type hints used
+
+#### Level 3: Runtime Tests (~60 seconds, requires Docker)
+```bash
+pytest -m level3 --use-sandbox -v
+```
+Validates:
+- Agent initialization succeeds (no missing parameters)
+- CodeInterpreterTool has `tool_config` if required
+- Server starts without errors
+- Frontend builds successfully (npm run build)
+- `"use client"` directive present in React components
+- TypeScript compilation passes
+
+#### Level 4: Integration Tests (~120 seconds, requires Docker)
+```bash
+pytest -m level4 --use-sandbox -v
+```
+Validates:
+- Health endpoint returns `{"status": "healthy"}`
+- CORS configuration allows frontend
+- Chat message round-trip works
+- Session persistence across messages
+- Thread creation and listing
+- Error responses have proper JSON format
+
+#### Validation Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              PRE-DELIVERY VALIDATION (MANDATORY)             │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. Run Level 1 tests: pytest -m level1 -v                  │
+│                          ↓                                   │
+│  2. Check: ALL tests pass?                                  │
+│         ↓ NO                    ↓ YES                       │
+│  ┌──────────────┐        ┌──────────────┐                   │
+│  │ FIX TEMPLATE │        │ CONTINUE     │                   │
+│  │ FIX VARIABLES│        │ TO LEVEL 2   │                   │
+│  │ GO TO STEP 1 │        └──────────────┘                   │
+│  └──────────────┘               ↓                           │
+│                          3. Run Level 2: pytest -m level2   │
+│                               ↓                             │
+│                          4. Check: ALL pass?                │
+│                               ↓ NO        ↓ YES             │
+│                          ┌──────────┐  ┌──────────┐         │
+│                          │ FIX IMPORTS│ │ CONTINUE │         │
+│                          │ USE CONTEXT7│ │ TO LEVEL 3│        │
+│                          │ GO TO 3    │ └──────────┘         │
+│                          └──────────┘       ↓               │
+│                          5. Run Level 3: pytest -m level3   │
+│                                 --use-sandbox               │
+│                               ↓ FAIL      ↓ PASS            │
+│                          ┌──────────┐  ┌──────────┐         │
+│                          │ FIX CODE │  │ ✅ READY │         │
+│                          │ CHECK SDK │  │ DELIVER! │         │
+│                          │ GO TO 1   │  └──────────┘         │
+│                          └──────────┘                        │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Common Validation Errors and Fixes
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Unresolved placeholders: {{AGENT_NAME}}` | Missing variable in template | Add to template_vars dict |
+| `SyntaxError: unexpected EOF` | Template logic error | Check Jinja conditionals |
+| `ImportError: chatkit.stores` | Wrong module path | Use `chatkit.store` (singular) |
+| `TypeError: tool_config required` | SDK version mismatch | Add tool_config param |
+| `Server did not start` | Import or config error | Check container logs |
+| `Missing 'use client'` | React Server Component issue | Add directive to components |
+
+#### Minimum Pass Criteria
+
+Before delivery, code MUST pass:
+- **Always**: Level 1 (Syntax) - 100% pass rate required
+- **Always**: Level 2 (Imports) - 100% pass rate required
+- **Backend only**: Level 3 (Runtime) - Agent initialization must pass
+- **Optional**: Level 4 (Integration) - Recommended but not blocking
+
+**If ANY Level 1 or Level 2 test fails, DO NOT DELIVER. Fix and retest.**
 
 ### Step 6: Local Storage (BEFORE WhatsApp Delivery)
 

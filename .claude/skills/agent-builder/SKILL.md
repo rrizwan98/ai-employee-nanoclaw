@@ -61,6 +61,44 @@ For detailed patterns and examples, refer to these reference documents in `refer
 
 ---
 
+## ⛔⛔⛔ TDD AWARENESS - DESIGN FOR TESTABILITY! ⛔⛔⛔
+
+**When designing agents, remember that ALL code will undergo 4-Level TDD:**
+
+### Design Principles for TDD Compatibility:
+
+```
+Level 1 (Syntax):
+  → Design agents with valid Python syntax
+  → Use correct import paths from SDK
+  → No placeholder variables in design
+
+Level 2 (Import):
+  → Use only valid SDK imports (from agents import Agent, Runner)
+  → Verify tool imports exist before designing with them
+  → Check Context7 for correct module paths
+
+Level 3 (Runtime):
+  → Design agents that initialize without errors
+  → Ensure tool signatures are correct
+  → Design handoffs that work at runtime
+
+Level 4 (Integration):
+  → Design for health endpoint compatibility
+  → Consider CORS requirements
+  → Plan for ChatKit integration
+```
+
+### Handoff to code-generation:
+
+When handing off to code-generation skill, ensure:
+- [ ] All imports are verified with Context7
+- [ ] Agent patterns are SDK-compatible
+- [ ] Tools have correct signatures
+- [ ] Design will pass TDD Level 1-4
+
+---
+
 ## Quick Reference: Agent Types
 
 ### Standard Agent (Text-based)
