@@ -34,27 +34,47 @@ For detailed patterns and examples, refer to these reference documents in `refer
 
 ## Context7: Up-to-Date Documentation
 
-**ALWAYS use Context7 tools when you need latest SDK documentation!**
+**Context7 verification runs AUTOMATICALLY during code generation!**
 
-### Available Tools:
+### Phase 2: Automatic Verification (NEW!)
+
+The `generate_from_template` and `generate_frontend_from_template` IPC tools now:
+
+1. **Query Context7** for all mandatory SDK patterns BEFORE generation
+2. **Compare** responses with current templates/skill references
+3. **Auto-update** templates and references when SDK patterns change
+4. **Cache** responses (30-minute TTL) for performance
+
+**You no longer need to manually verify patterns before code generation.**
+
+### Automatic Updates
+
+When Context7 detects SDK pattern changes:
+- **Templates**: Updated in `nanoclaw/container/templates/`
+- **References**: Updated in `.claude/skills/*/references/`
+- **TDD**: Templates re-validated after updates
+
+### Manual Tools (Still Available)
+
+For debugging or investigation:
 
 | Tool | Purpose |
 |------|---------|
 | `context7_resolve_library` | Find library ID (e.g., "openai agents sdk" → `/openai/openai-agents-python`) |
 | `context7_query_docs` | Query documentation with specific questions |
 
-### When to Use Context7:
+### When to Use Manual Context7:
 
-1. **Before code generation** - Verify latest API patterns
-2. **When unsure about SDK features** - Check if feature exists
-3. **For error debugging** - Find correct usage examples
-4. **For new features** - Get up-to-date documentation
+1. **Debugging import errors** - Check if module path changed
+2. **Investigating new features** - Explore SDK capabilities
+3. **Understanding deprecations** - Find migration guidance
 
 ### Common Library IDs:
 
 | Library | Context7 ID |
 |---------|-------------|
 | OpenAI Agents SDK | `/openai/openai-agents-python` |
+| ChatKit Python | `/openai/chatkit-python` |
 | ChatKit React | `/openai/chatkit-js` |
 | Next.js | `/vercel/next.js` |
 | FastAPI | `/tiangolo/fastapi` |
@@ -171,7 +191,7 @@ triage_agent = Agent(
 |------|--------|----------|
 | WebSearchTool | `from agents import WebSearchTool` | Web search, current info |
 | FileSearchTool | `from agents import FileSearchTool` | RAG, document Q&A |
-| CodeInterpreterTool | `from agents import CodeInterpreterTool` | Python execution, data analysis |
+| CodeInterpreterTool | `from agents import CodeInterpreterTool` | Python execution, data analysis (requires `tool_config`) |
 | ImageGenerationTool | `from agents import ImageGenerationTool` | DALL-E image creation |
 | ComputerTool | `from agents import ComputerTool` | Browser/desktop automation |
 | HostedMCPTool | `from agents import HostedMCPTool` | Remote MCP servers |
@@ -184,7 +204,7 @@ agent = Agent(
     tools=[
         WebSearchTool(search_context_size="medium"),
         FileSearchTool(vector_store_ids=["vs_xxx"], max_num_results=5),
-        CodeInterpreterTool(),
+        CodeInterpreterTool(tool_config={"type": "code_interpreter"}),
     ],
 )
 ```
@@ -335,7 +355,7 @@ Given AgentConfig, select:
 |--------|----------------|
 | `tools.hosted: ["web_search"]` | `WebSearchTool()` |
 | `tools.hosted: ["file_search"]` | `FileSearchTool(vector_store_ids=[...])` |
-| `tools.hosted: ["code_interpreter"]` | `CodeInterpreterTool()` |
+| `tools.hosted: ["code_interpreter"]` | `CodeInterpreterTool(tool_config={"type": "code_interpreter"})` |
 | `tools.hosted: ["image_generation"]` | `ImageGenerationTool()` |
 | `tools.custom: ["get_weather"]` | Generate `@function_tool` stub |
 | `tools.mcp_servers: [...]` | `MCPServerStdio` or `HostedMCPTool` |

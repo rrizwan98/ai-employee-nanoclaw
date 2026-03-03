@@ -22,26 +22,67 @@ Generate complete, runnable OpenAI Agents SDK code from AgentConfig and architec
 
 ## Context7: Up-to-Date Documentation
 
-**Use Context7 tools to verify SDK patterns before code generation!**
+**Context7 verification runs AUTOMATICALLY before every code generation!**
 
-### Available Tools:
+### Phase 2: Automatic Verification (NEW!)
+
+When you call `generate_from_template` or `generate_frontend_from_template`, the system automatically:
+
+1. **Queries Context7** for all relevant SDK patterns
+2. **Compares** Context7 responses with current templates/references
+3. **Updates** templates and references if mismatches detected
+4. **Uses Cache** (30-minute TTL) to avoid redundant queries
+
+This ensures templates always use the latest SDK patterns without manual verification.
+
+### Automatic Query Points
+
+| Query Point | Library ID | Applies To |
+|-------------|------------|------------|
+| Agent Class | `/openai/openai-agents-python` | Backend |
+| WebSearchTool | `/openai/openai-agents-python` | Backend |
+| CodeInterpreterTool | `/openai/openai-agents-python` | Backend |
+| FileSearchTool | `/openai/openai-agents-python` | Backend |
+| ChatKit Store | `/openai/chatkit-python` | Backend |
+| FastAPI ChatKit | `/openai/chatkit-python` | Backend |
+| Next.js ChatKit | `/openai/chatkit-js` | Frontend |
+
+### Response Metadata
+
+Generated code includes Context7 verification status:
+
+```
+**Context7 Verification**: ✅ Verified
+**Patterns Updated**: 2 (ref:agent-builder/references/sdk.md, tpl:basic-chatbot/main.py)
+**Cache Hits**: 5/7
+```
+
+### Manual Tools (Optional)
+
+You can still use manual tools for debugging:
 
 | Tool | Purpose |
 |------|---------|
 | `context7_resolve_library` | Find library ID for any library |
 | `context7_query_docs` | Get latest documentation and examples |
 
-### When to Use:
+### Force Refresh
 
-1. **Before generating agent code** - Verify OpenAI Agents SDK patterns
-2. **For ChatKit integration** - Check latest `@openai/chatkit-react` usage
-3. **When unsure about imports** - Verify correct module paths
-4. **For error fixing** - Find correct API signatures
+To bypass cache and force Context7 refresh:
+
+```typescript
+generate_from_template({
+  template_name: "basic-chatbot",
+  variables: {...},
+  force_context7_refresh: true  // Bypass 30-min cache
+})
+```
 
 ### Quick Reference IDs:
 
 ```
 OpenAI Agents SDK: /openai/openai-agents-python
+ChatKit Python:    /openai/chatkit-python
 ChatKit React:     /openai/chatkit-js
 FastAPI:           /tiangolo/fastapi
 Next.js:           /vercel/next.js

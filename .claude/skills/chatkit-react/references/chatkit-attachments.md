@@ -295,7 +295,7 @@ from agents import Agent, CodeInterpreterTool
 
 agent = Agent(
     name="Data Analyst",
-    tools=[CodeInterpreterTool()],
+    tools=[CodeInterpreterTool(tool_config={"type": "code_interpreter"})],
     instructions="""
     You are a data analyst. When users upload files:
     - CSV files: Analyze data, create charts

@@ -22,7 +22,7 @@ Complete mapping of config values to Python imports.
 |------|---------------|
 | WebSearchTool | `WebSearchTool(search_context_size="medium")` |
 | FileSearchTool | `FileSearchTool(vector_store_ids=["{VS_ID}"], max_num_results=5)` |
-| CodeInterpreterTool | `CodeInterpreterTool()` |
+| CodeInterpreterTool | `CodeInterpreterTool(tool_config={"type": "code_interpreter"})` |
 | ImageGenerationTool | `ImageGenerationTool()` |
 | ComputerTool | `ComputerTool()` |
 
@@ -148,7 +148,7 @@ from agents import (
     Runner,
     SQLiteSession,
     WebSearchTool,
-    CodeInterpreterTool,
+    CodeInterpreterTool,  # Requires: tool_config={"type": "code_interpreter"}
     function_tool,
 )
 ```
@@ -220,7 +220,7 @@ def get_imports(config: dict) -> list[str]:
     tool_imports = {
         "web_search": "WebSearchTool",
         "file_search": "FileSearchTool",
-        "code_interpreter": "CodeInterpreterTool",
+        "code_interpreter": "CodeInterpreterTool(tool_config={'type': 'code_interpreter'})",
         "image_generation": "ImageGenerationTool",
         "computer": "ComputerTool",
     }

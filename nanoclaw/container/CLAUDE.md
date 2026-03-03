@@ -18,11 +18,29 @@ Your training data for ChatKit, OpenAI Agents SDK, and related libraries is **OU
    → USE generate_frontend_from_template for frontend
    → NEVER write code manually!
 
-3. CONTEXT7 (MCP Server)
-   → USE context7_resolve_library to find library IDs
-   → USE context7_query_docs for latest documentation
-   → QUERY before generating any SDK code
+3. CONTEXT7 (NOW AUTOMATIC!)
+   → Context7 verification runs AUTOMATICALLY during template generation
+   → Templates and references auto-update when SDK patterns change
+   → 30-minute cache for performance
+   → Manual tools still available for debugging
 ```
+
+### Phase 2: Automatic Context7 Verification (NEW!)
+
+When you call `generate_from_template` or `generate_frontend_from_template`:
+
+1. **Context7 queries ALL mandatory SDK patterns** automatically
+2. **Compares** responses with current templates/references
+3. **Auto-updates** files when mismatches detected
+4. **Reports** verification status in response
+
+Response includes:
+```
+**Context7 Verification**: ✅ Verified
+**Patterns Updated**: 2 (ref:sdk.md, tpl:main.py)
+```
+
+You no longer need to manually call Context7 before code generation!
 
 ### ⛔ FORBIDDEN Actions - VIOLATION WILL CAUSE PRODUCTION ERRORS:
 

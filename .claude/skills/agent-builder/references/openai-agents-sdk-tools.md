@@ -73,15 +73,22 @@ vector_store = client.vector_stores.create(name="My Knowledge Base")
 
 **Use for**: Calculations, data analysis, Python execution, file processing
 
+**IMPORTANT**: CodeInterpreterTool requires `tool_config` parameter!
+
 ```python
 from agents import Agent, CodeInterpreterTool
 
 agent = Agent(
     name="Data Analyst",
     instructions="Use code to analyze data and create visualizations.",
-    tools=[CodeInterpreterTool()],
+    tools=[CodeInterpreterTool(tool_config={"type": "code_interpreter"})],
 )
 ```
+
+**Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| tool_config | dict | Yes | Must include `{"type": "code_interpreter"}` |
 
 **Capabilities**:
 - Execute Python code in sandbox
@@ -337,7 +344,7 @@ research_agent = Agent(
     tools=[
         WebSearchTool(),
         FileSearchTool(vector_store_ids=["vs_documents"]),
-        CodeInterpreterTool(),
+        CodeInterpreterTool(tool_config={"type": "code_interpreter"}),
     ],
 )
 ```

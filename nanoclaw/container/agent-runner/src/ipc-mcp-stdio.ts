@@ -816,6 +816,9 @@ server.tool(
 Takes a template name and variable substitutions.
 Returns generated files ready for delivery (WhatsApp ZIP or GitHub).
 
+**IMPORTANT**: Context7 verification runs AUTOMATICALLY before generation
+to ensure templates use the latest SDK patterns.
+
 Example:
   template_name: "basic-chatbot"
   variables: {
@@ -825,10 +828,59 @@ Example:
   }`,
   {
     template_name: z.string().describe('Template name to generate from'),
-    variables: z.record(z.string()).describe('Variable substitutions (key-value pairs)'),
+    variables: z.record(z.string(), z.string()).describe('Variable substitutions (key-value pairs)'),
     output_dir: z.string().optional().describe('Output directory for generated files (defaults to temp)'),
+    force_context7_refresh: z.boolean().optional().describe('Force refresh patterns from Context7 (bypass cache)'),
   },
   async (args) => {
+    // ========================================================================
+    // PHASE 2: Context7 Verification (MANDATORY before generation)
+    // ========================================================================
+    let context7Verified = false;
+    let patternsUpdated: string[] = [];
+    let cacheHits = 0;
+    let verificationWarnings: string[] = [];
+
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { getContext7Verifier } = await import('./context7/index.js');
+      const verifier = getContext7Verifier(
+        '/workspace/.claude/skills',
+        '/workspace/templates'
+      );
+
+      console.log(`[Context7] Starting verification for template: ${args.template_name}`);
+
+      const verification = await verifier.verify({
+        templateName: args.template_name,
+        requestType: 'backend',
+        forceRefresh: args.force_context7_refresh || false,
+      });
+
+      context7Verified = verification.success;
+      patternsUpdated = verification.updatesApplied;
+      cacheHits = verification.cacheHits;
+      verificationWarnings = verification.warnings;
+
+      console.log(`[Context7] Verification complete:`);
+      console.log(`  - Queries executed: ${verification.queriesExecuted}`);
+      console.log(`  - Cache hits: ${cacheHits}`);
+      console.log(`  - Updates applied: ${patternsUpdated.length}`);
+
+      if (patternsUpdated.length > 0) {
+        console.log(`[Context7] Updated patterns:`);
+        patternsUpdated.forEach(p => console.log(`    - ${p}`));
+      }
+    } catch (error) {
+      // Context7 verification failed - continue with warning
+      console.warn(`[Context7] Verification failed, continuing with existing patterns:`, error);
+      verificationWarnings.push(
+        `Context7 verification failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+      // Don't block generation - fall back to existing patterns
+    }
+    // ========================================================================
+
     const result = await callTemplateIPC('generate_from_template', {
       template_name: args.template_name,
       variables: args.variables,
@@ -846,11 +898,29 @@ Example:
     const files = r.files as Record<string, string>;
     const filesList = Object.keys(files).join('\n- ');
 
+    // Build response with Context7 metadata
+    let responseText = `Generated ${Object.keys(files).length} files from ${args.template_name} template:\n\n- ${filesList}\n\nOutput directory: ${r.output_dir}`;
+
+    // Add Context7 verification info
+    responseText += `\n\n**Context7 Verification**: ${context7Verified ? '✅ Verified' : '⚠️ Using cached patterns'}`;
+    if (patternsUpdated.length > 0) {
+      responseText += `\n**Patterns Updated**: ${patternsUpdated.length} (${patternsUpdated.join(', ')})`;
+    }
+    if (verificationWarnings.length > 0) {
+      responseText += `\n**Warnings**: ${verificationWarnings.join('; ')}`;
+    }
+
+    responseText += `\n\nFiles are ready for delivery via WhatsApp ZIP or GitHub.`;
+
     return {
       content: [{
         type: 'text' as const,
-        text: `Generated ${Object.keys(files).length} files from ${args.template_name} template:\n\n- ${filesList}\n\nOutput directory: ${r.output_dir}\n\nFiles are ready for delivery via WhatsApp ZIP or GitHub.`,
+        text: responseText,
       }],
+      // Include Context7 metadata in response for tracking
+      context7_verified: context7Verified,
+      patterns_updated: patternsUpdated,
+      cache_hits: cacheHits,
     };
   },
 );
@@ -1048,6 +1118,9 @@ Returns generated files ready for delivery.
 IMPORTANT: Always use this for frontend generation instead of writing custom code.
 This ensures proper ChatKit integration and consistent component structure.
 
+PHASE 2: Context7 verification runs AUTOMATICALLY before generation to ensure
+templates use the latest Next.js and ChatKit patterns.
+
 Example:
   template_name: "nextjs-chatkit-ui"
   variables: {
@@ -1058,10 +1131,59 @@ Example:
   }`,
   {
     template_name: z.string().describe('Frontend template name to generate from'),
-    variables: z.record(z.string()).describe('Variable substitutions (key-value pairs)'),
+    variables: z.record(z.string(), z.string()).describe('Variable substitutions (key-value pairs)'),
     output_dir: z.string().optional().describe('Output directory for generated files'),
+    force_context7_refresh: z.boolean().optional().describe('Force refresh patterns from Context7 (bypass cache)'),
   },
   async (args) => {
+    // ========================================================================
+    // PHASE 2: Context7 Verification (MANDATORY before frontend generation)
+    // ========================================================================
+    let context7Verified = false;
+    let patternsUpdated: string[] = [];
+    let cacheHits = 0;
+    let verificationWarnings: string[] = [];
+
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { getContext7Verifier } = await import('./context7/index.js');
+      const verifier = getContext7Verifier(
+        '/workspace/.claude/skills',
+        '/workspace/templates'
+      );
+
+      console.log(`[Context7] Starting frontend verification for template: ${args.template_name}`);
+
+      const verification = await verifier.verify({
+        templateName: args.template_name,
+        requestType: 'frontend',
+        forceRefresh: args.force_context7_refresh || false,
+      });
+
+      context7Verified = verification.success;
+      patternsUpdated = verification.updatesApplied;
+      cacheHits = verification.cacheHits;
+      verificationWarnings = verification.warnings;
+
+      console.log(`[Context7] Frontend verification complete:`);
+      console.log(`  - Queries executed: ${verification.queriesExecuted}`);
+      console.log(`  - Cache hits: ${cacheHits}`);
+      console.log(`  - Updates applied: ${patternsUpdated.length}`);
+
+      if (patternsUpdated.length > 0) {
+        console.log(`[Context7] Updated frontend patterns:`);
+        patternsUpdated.forEach(p => console.log(`    - ${p}`));
+      }
+    } catch (error) {
+      // Context7 verification failed - continue with warning
+      console.warn(`[Context7] Frontend verification failed, continuing with existing patterns:`, error);
+      verificationWarnings.push(
+        `Context7 verification failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+      // Don't block generation - fall back to existing patterns
+    }
+    // ========================================================================
+
     const result = await callTemplateIPC('generate_frontend_from_template', {
       template_name: args.template_name,
       variables: args.variables,
@@ -1084,11 +1206,29 @@ Example:
     const pages = Object.keys(files).filter(f => f.includes('/app/')).length;
     const configs = Object.keys(files).filter(f => f.endsWith('.json') || f.endsWith('.config.js') || f.endsWith('.config.ts')).length;
 
+    // Build response with Context7 metadata
+    let responseText = `✅ Generated ${fileCount} frontend files from ${args.template_name} template:\n\n📁 Summary:\n- Components: ${components} files\n- Pages: ${pages} files\n- Configs: ${configs} files\n\nOutput directory: ${r.output_dir}`;
+
+    // Add Context7 verification info
+    responseText += `\n\n**Context7 Verification**: ${context7Verified ? '✅ Verified' : '⚠️ Using cached patterns'}`;
+    if (patternsUpdated.length > 0) {
+      responseText += `\n**Frontend Patterns Updated**: ${patternsUpdated.length} (${patternsUpdated.join(', ')})`;
+    }
+    if (verificationWarnings.length > 0) {
+      responseText += `\n**Warnings**: ${verificationWarnings.join('; ')}`;
+    }
+
+    responseText += `\n\n🚀 Next steps:\n1. cd frontend\n2. npm install\n3. npm run dev\n\nFiles are ready for delivery via WhatsApp ZIP or GitHub.`;
+
     return {
       content: [{
         type: 'text' as const,
-        text: `✅ Generated ${fileCount} frontend files from ${args.template_name} template:\n\n📁 Summary:\n- Components: ${components} files\n- Pages: ${pages} files\n- Configs: ${configs} files\n\nOutput directory: ${r.output_dir}\n\n🚀 Next steps:\n1. cd frontend\n2. npm install\n3. npm run dev\n\nFiles are ready for delivery via WhatsApp ZIP or GitHub.`,
+        text: responseText,
       }],
+      // Include Context7 metadata in response for tracking
+      context7_verified: context7Verified,
+      patterns_updated: patternsUpdated,
+      cache_hits: cacheHits,
     };
   },
 );
