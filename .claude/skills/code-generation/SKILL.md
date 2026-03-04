@@ -9,6 +9,107 @@ Generate complete, runnable OpenAI Agents SDK code from AgentConfig and architec
 
 ---
 
+## ⛔⛔⛔ MANDATORY RULE: VALIDATE AFTER EVERY CODE WRITE ⛔⛔⛔
+
+**THIS RULE APPLIES TO ALL CODE - NO EXCEPTIONS!**
+
+### The Golden Rule
+
+> **"Har code likhne ke baad `validate_project_code` call karo"**
+>
+> After writing ANY code (new project, update, bug fix, feature addition),
+> you MUST call `validate_project_code` IPC tool BEFORE delivery.
+
+### When This Rule Applies
+
+| Scenario | Validation Required? |
+|----------|---------------------|
+| New project via template | ✅ YES (auto + manual confirm) |
+| New project manual code | ✅ YES (mandatory) |
+| Adding new feature to existing project | ✅ YES (mandatory) |
+| Fixing a bug in existing code | ✅ YES (mandatory) |
+| Adding new tool to agent | ✅ YES (mandatory) |
+| Modifying handoffs | ✅ YES (mandatory) |
+| Updating instructions | ✅ YES (mandatory) |
+| ANY code modification | ✅ YES (mandatory) |
+
+### Validation Workflow (MUST FOLLOW)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│         MANDATORY VALIDATION WORKFLOW                        │
+│         (For ALL code changes - NO EXCEPTIONS!)             │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. Write/Modify Code                                       │
+│              ↓                                               │
+│  2. Call validate_project_code IPC:                         │
+│     {                                                        │
+│       "project_path": "/workspace/client-agents/.../backend",│
+│       "project_type": "backend" or "frontend",               │
+│       "run_level_3": true,                                   │
+│       "run_level_4": false                                   │
+│     }                                                        │
+│              ↓                                               │
+│  3. Check Response:                                          │
+│     - If success: true → SAFE TO DELIVER                    │
+│     - If success: false → FIX ERRORS, GO TO STEP 1          │
+│              ↓                                               │
+│  4. Only after success: true → Package and Deliver          │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Example: Adding Feature to Existing Project
+
+```
+Client: "Add FlightSpecialist to my travel bot"
+
+Step 1: Find project
+        → /workspace/client-agents/923032206662/travel-bot/current/
+
+Step 2: Modify specialists.py
+        → Add FlightSpecialist agent with tools
+
+Step 3: Update orchestrator.py
+        → Add FlightSpecialist to handoffs
+
+Step 4: CALL validate_project_code (MANDATORY!)
+        → {
+            "project_path": "/workspace/client-agents/923032206662/travel-bot/current",
+            "project_type": "backend",
+            "run_level_3": true
+          }
+
+Step 5: Check result
+        → If success: true → Continue to Step 6
+        → If success: false → Fix errors, go to Step 2
+
+Step 6: Only now → Package ZIP and deliver
+```
+
+### ⛔ FORBIDDEN - DO NOT DO THIS
+
+```
+❌ Write code and deliver without validation
+❌ Skip validation for "small changes"
+❌ Skip validation for "just a bug fix"
+❌ Assume code works without testing
+❌ Deliver code that hasn't been validated
+```
+
+### ✅ REQUIRED - ALWAYS DO THIS
+
+```
+✅ Call validate_project_code after EVERY code change
+✅ Wait for success: true before delivery
+✅ Fix errors if validation fails
+✅ Re-validate after fixing errors
+✅ Only deliver after validation passes
+```
+
+---
+
 ## References
 
 | Reference | Description |

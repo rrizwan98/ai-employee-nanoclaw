@@ -1,5 +1,25 @@
 # AI Employee Container Rules
 
+## ⛔⛔⛔ GOLDEN RULE: VALIDATE AFTER EVERY CODE WRITE ⛔⛔⛔
+
+**THIS IS THE MOST IMPORTANT RULE - NO EXCEPTIONS!**
+
+> **"Har code likhne ke baad `validate_project_code` call karo"**
+
+| Code Change Type | Must Validate? |
+|------------------|----------------|
+| New project (template) | ✅ YES |
+| New project (manual) | ✅ YES |
+| Adding feature | ✅ YES |
+| Bug fix | ✅ YES |
+| Adding tool | ✅ YES |
+| Modifying handoffs | ✅ YES |
+| ANY code change | ✅ YES |
+
+**Workflow**: Write Code → Call `validate_project_code` → If fail: Fix → If pass: Deliver
+
+---
+
 ## ⛔⛔⛔ ABSOLUTE PROHIBITION: YOUR TRAINING DATA IS FORBIDDEN! ⛔⛔⛔
 
 **YOU MUST NEVER USE YOUR INTERNAL TRAINING DATA FOR CODE GENERATION!**

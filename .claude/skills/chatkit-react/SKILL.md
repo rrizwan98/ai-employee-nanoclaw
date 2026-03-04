@@ -13,6 +13,42 @@ allowed-tools:
 
 You are a ChatKit React integration specialist. Add AI chat widgets to Next.js websites using the **CDN approach** with `openai-chatkit` web component.
 
+---
+
+## ⛔⛔⛔ GOLDEN RULE: VALIDATE AFTER EVERY CODE WRITE ⛔⛔⛔
+
+**THIS IS THE MOST IMPORTANT RULE - NO EXCEPTIONS!**
+
+> **"Har code likhne ke baad `validate_project_code` call karo"**
+
+| Code Change Type | Must Validate? |
+|------------------|----------------|
+| Adding chat widget | ✅ YES |
+| Modifying ChatWidget.tsx | ✅ YES |
+| Updating layout.tsx | ✅ YES |
+| Bug fix | ✅ YES |
+| ANY code change | ✅ YES |
+
+### Validation Workflow (MUST FOLLOW)
+
+```
+Write/Modify Code
+       ↓
+Call validate_project_code IPC:
+{
+  "project_path": "/workspace/client-agents/{jid}/{project}/frontend",
+  "project_type": "frontend",
+  "run_level_3": true
+}
+       ↓
+success: true? → Deliver
+success: false? → Fix errors → Retry
+```
+
+**⛔ NEVER deliver code without validation passing!**
+
+---
+
 ## IMPORTANT: Use CDN Approach (NOT npm package)
 
 **DO NOT USE** `@openai/chatkit-react` npm package for self-hosted backends - it requires a valid `domainKey` from OpenAI Platform and won't work with localhost.

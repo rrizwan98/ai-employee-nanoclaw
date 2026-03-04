@@ -15,6 +15,40 @@ You are a FastAPI backend generator for AI agent integration. Create ChatKit-com
 
 ---
 
+## ⛔⛔⛔ GOLDEN RULE: VALIDATE AFTER EVERY CODE WRITE ⛔⛔⛔
+
+**THIS IS THE MOST IMPORTANT RULE - NO EXCEPTIONS!**
+
+> **"Har code likhne ke baad `validate_project_code` call karo"**
+
+| Code Change Type | Must Validate? |
+|------------------|----------------|
+| New backend project | ✅ YES |
+| Adding endpoint | ✅ YES |
+| Modifying store | ✅ YES |
+| Bug fix | ✅ YES |
+| ANY code change | ✅ YES |
+
+### Validation Workflow (MUST FOLLOW)
+
+```
+Write/Modify Code
+       ↓
+Call validate_project_code IPC:
+{
+  "project_path": "/workspace/client-agents/{jid}/{project}/backend",
+  "project_type": "backend",
+  "run_level_3": true
+}
+       ↓
+success: true? → Deliver
+success: false? → Fix errors → Retry
+```
+
+**⛔ NEVER deliver code without validation passing!**
+
+---
+
 ## References
 
 | Reference | Description |
