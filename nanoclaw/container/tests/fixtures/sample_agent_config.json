@@ -1,0 +1,125 @@
+{
+  "templates": {
+    "basic-chatbot": {
+      "agent_name": "TestFAQBot",
+      "agent_name_pascal": "TestFaqBot",
+      "agent_type": "standard",
+      "company_name": "Test Company",
+      "company_description": "A test company for unit testing",
+      "support_email": "test@example.com",
+      "primary_color": "#3B82F6",
+      "tools": ["WebSearchTool"],
+      "instructions": "You are a helpful FAQ assistant for Test Company.",
+      "model": "gpt-4o-mini",
+      "session_type": "sqlite",
+      "domain": "FAQ Support"
+    },
+    "customer-support": {
+      "agent_name": "TestSupportTeam",
+      "agent_name_pascal": "TestSupportTeam",
+      "agent_type": "multi-agent",
+      "company_name": "Support Corp",
+      "company_description": "A customer support company",
+      "support_email": "support@example.com",
+      "billing_email": "billing@example.com",
+      "technical_email": "tech@example.com",
+      "primary_color": "#10B981",
+      "departments": ["billing", "technical", "general"],
+      "tools": ["WebSearchTool", "FileSearchTool"],
+      "model": "gpt-4o-mini",
+      "session_type": "redis",
+      "billing_instructions": "You handle billing inquiries for Support Corp.",
+      "technical_instructions": "You handle technical support for Support Corp.",
+      "general_instructions": "You handle general inquiries for Support Corp.",
+      "domain": "Customer Support"
+    },
+    "data-processor": {
+      "agent_name": "TestDataAgent",
+      "agent_name_pascal": "TestDataAgent",
+      "agent_type": "standard",
+      "company_name": "Data Corp",
+      "company_description": "Data processing company",
+      "domain": "Data Processing",
+      "input_schema": "CSVInput",
+      "output_schema": "ProcessedOutput",
+      "input_type": "CSV file with headers",
+      "output_type": "JSON with processed results",
+      "validation_rules": "Check for required fields, validate data types",
+      "tools": ["CodeInterpreterTool"],
+      "model": "gpt-4o-mini",
+      "session_type": "sqlite"
+    },
+    "multi-agent-system": {
+      "agent_name": "TestOrchestrator",
+      "agent_name_pascal": "TestOrchestrator",
+      "agent_type": "multi-agent",
+      "company_name": "Multi Corp",
+      "company_description": "Multi-agent orchestration company",
+      "domain": "Multi-Agent Orchestration",
+      "system_name": "TestOrchestrator System",
+      "orchestrator_name": "MainOrchestrator",
+      "specialist_count": 3,
+      "specialist_names": ["researcher", "writer", "reviewer"],
+      "specialists": [
+        {"name": "researcher", "description": "Research specialist"},
+        {"name": "writer", "description": "Content writer"},
+        {"name": "reviewer", "description": "Quality reviewer"}
+      ],
+      "tools": ["WebSearchTool", "FileSearchTool"],
+      "model": "gpt-4o-mini",
+      "session_type": "redis"
+    },
+    "rag-assistant": {
+      "agent_name": "TestRAGBot",
+      "agent_name_pascal": "TestRagBot",
+      "agent_type": "standard",
+      "company_name": "Knowledge Corp",
+      "company_description": "Knowledge base company",
+      "domain": "Knowledge Management",
+      "vector_store_name": "test_knowledge_base",
+      "document_types": ["pdf", "txt", "md"],
+      "tools": ["FileSearchTool"],
+      "model": "gpt-4o-mini",
+      "session_type": "sqlite"
+    },
+    "task-automation": {
+      "agent_name": "TestAutomator",
+      "agent_name_pascal": "TestAutomator",
+      "agent_type": "multi-agent",
+      "company_name": "Automation Corp",
+      "company_description": "Task automation company",
+      "domain": "Task Automation",
+      "task_types": ["data_sync", "report_generation", "notification"],
+      "tools": ["CodeInterpreterTool", "WebSearchTool"],
+      "model": "gpt-4o-mini",
+      "session_type": "redis",
+      "schedule_enabled": true
+    },
+    "nextjs-chatkit-ui": {
+      "project_name": "test-website",
+      "company_name": "Test Company",
+      "company_tagline": "Testing made easy",
+      "company_description": "A company focused on testing",
+      "primary_color": "#3B82F6",
+      "secondary_color": "#1E40AF",
+      "chatkit_api_url": "http://localhost:8000/chatkit",
+      "features": ["Hero", "Features", "FAQ", "Contact"],
+      "contact_email": "contact@example.com",
+      "phone_number": "+1234567890"
+    }
+  },
+  "sdk_versions": {
+    "openai_agents": ">=0.7.0",
+    "openai_chatkit": ">=1.5.0",
+    "fastapi": ">=0.109.0",
+    "pydantic": ">=2.0.0",
+    "next": "^14.2.0",
+    "react": "^18.2.0"
+  },
+  "test_messages": {
+    "greeting": "Hello, I need help!",
+    "faq_question": "What are your business hours?",
+    "technical_question": "How do I reset my password?",
+    "billing_question": "Where can I view my invoice?"
+  }
+}

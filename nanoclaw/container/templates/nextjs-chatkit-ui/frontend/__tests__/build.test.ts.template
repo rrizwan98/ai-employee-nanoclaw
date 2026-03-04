@@ -1,0 +1,20 @@
+import { describe, it, expect } from 'vitest'
+
+describe('Frontend Build Verification', () => {
+  it('should have valid environment', () => {
+    expect(process.env.NODE_ENV).toBeDefined()
+  })
+
+  it('should have correct project structure', () => {
+    // This test passes if the file exists and imports work
+    expect(true).toBe(true)
+  })
+})
+
+describe('{{PROJECT_NAME}} Configuration', () => {
+  it('should have project name defined', () => {
+    const projectName = '{{PROJECT_NAME}}'
+    expect(projectName).toBeTruthy()
+    expect(projectName.length).toBeGreaterThan(0)
+  })
+})

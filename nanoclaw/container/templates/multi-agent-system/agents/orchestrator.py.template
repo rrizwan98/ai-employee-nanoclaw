@@ -6,33 +6,71 @@ from agents import Agent, function_tool
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 from context.shared_context import shared_context
 from tools.shared_tools import *
-{{#each SPECIALIST_NAMES}}
-from .specialists.{{this}} import {{this}}_agent
-{{/each}}
+from .specialists.researcher import researcher_agent
+from .specialists.writer import writer_agent
+from .specialists.reviewer import reviewer_agent
 
 
 # Convert specialist agents to tools using @function_tool pattern
-{{#each SPECIALIST_NAMES}}
 @function_tool
-async def use_{{this}}_agent(task: str) -> str:
+async def use_researcher_agent(task: str) -> str:
     """
-    Delegate task to the {{this}} specialist agent.
+    Delegate task to the researcher specialist agent.
 
     Args:
-        task: The specific task or question for the {{this}} agent
+        task: The specific task or question for the researcher agent
 
     Returns:
-        The response from the {{this}} agent
+        The response from the researcher agent
     """
     from agents import Runner
     result = await Runner.run(
-        {{this}}_agent,
+        researcher_agent,
         task,
         context=shared_context
     )
     return result.final_output
 
-{{/each}}
+
+@function_tool
+async def use_writer_agent(task: str) -> str:
+    """
+    Delegate task to the writer specialist agent.
+
+    Args:
+        task: The specific task or question for the writer agent
+
+    Returns:
+        The response from the writer agent
+    """
+    from agents import Runner
+    result = await Runner.run(
+        writer_agent,
+        task,
+        context=shared_context
+    )
+    return result.final_output
+
+
+@function_tool
+async def use_reviewer_agent(task: str) -> str:
+    """
+    Delegate task to the reviewer specialist agent.
+
+    Args:
+        task: The specific task or question for the reviewer agent
+
+    Returns:
+        The response from the reviewer agent
+    """
+    from agents import Runner
+    result = await Runner.run(
+        reviewer_agent,
+        task,
+        context=shared_context
+    )
+    return result.final_output
+
 
 orchestrator_agent = Agent(
     name="{{ORCHESTRATOR_NAME}}",
@@ -47,9 +85,9 @@ Your role:
 5. Provide coherent, complete answers to the user
 
 Available Specialist Agents:
-{{#each SPECIALIST_NAMES}}
-- **{{this}}_agent**: [Describe the {{this}} agent's responsibilities]
-{{/each}}
+- **researcher_agent**: Handles research, data gathering, and information retrieval tasks
+- **writer_agent**: Handles content creation, writing, and documentation tasks
+- **reviewer_agent**: Handles quality review, proofreading, and validation tasks
 
 Guidelines:
 - Always greet users professionally and understand their needs first
@@ -69,9 +107,9 @@ Decision Process:
 Remember: You are the conductor, not the specialist. Delegate appropriately.
 """,
     functions=[
-{{#each SPECIALIST_NAMES}}
-        use_{{this}}_agent,
-{{/each}}
+        use_researcher_agent,
+        use_writer_agent,
+        use_reviewer_agent,
         # Shared tools available to orchestrator
         get_context,
         set_context,

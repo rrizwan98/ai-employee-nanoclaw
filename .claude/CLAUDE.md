@@ -6,7 +6,7 @@ This is the **Agent Builder AI Employee** - a WhatsApp-based AI assistant that h
 
 **Domain**: General Purpose (any type of agent)
 **Delivery**: Code files delivered via WhatsApp
-**Phase**: Phase 4 Agent Templates (Complete)
+**Phase**: Phase 7 Verification Sandbox (Complete)
 
 ## Architecture (6-Layer)
 
@@ -77,7 +77,7 @@ employee-nanoclaw/
 ### Hosted Tools
 - WebSearchTool (web search)
 - FileSearchTool (RAG/document search)
-- CodeInterpreterTool (Python execution)
+- CodeInterpreterTool (Python execution) - **Requires `tool_config={"type": "code_interpreter"}`**
 - ImageGenerationTool (DALL-E)
 - ComputerTool (browser automation)
 - HostedMCPTool (remote MCP servers)
@@ -120,13 +120,28 @@ GITHUB_TOKEN=ghp_...  # For GitHub repo/PR features
 
 | Server | Purpose | Usage |
 |--------|---------|-------|
-| Context7 | Latest SDK documentation | Query before code generation |
+| Context7 | Latest SDK documentation | **AUTOMATIC** before code generation |
 | GitHub | Repository & PR management | Optional delivery method |
 
-### Context7 Usage
-- Query OpenAI Agents SDK docs for latest patterns
-- Debug errors with up-to-date solutions
-- Verify API signatures before code generation
+### Context7 Usage (Phase 6: Automatic Verification)
+
+Context7 verification is now **AUTOMATIC**:
+
+1. **Mandatory Query Points**: 7 SDK patterns checked before every code generation
+2. **Auto-Update**: Templates and skill references updated when patterns change
+3. **30-min Cache**: Responses cached to reduce API calls
+4. **Graceful Fallback**: Uses existing patterns if Context7 unavailable
+
+When you call `generate_from_template` or `generate_frontend_from_template`:
+```
+[Context7] Starting verification for template: basic-chatbot
+[Context7] Verification complete:
+  - Queries executed: 7
+  - Cache hits: 5
+  - Updates applied: 2
+```
+
+Manual Context7 tools still available for debugging.
 
 ### GitHub Delivery Options
 1. **New Repository** - Create new repo, push code
@@ -179,6 +194,37 @@ psql $DATABASE_URL -f migrations/001_initial_schema.sql
   - [x] Template customization workflow
   - [x] IPC tools for template operations
   - [x] Template tests and documentation
+- [x] Phase 5: TDD Level Upgrade (4-Level Testing System) - **100% COMPLETE**
+  - [x] Level 1: Syntax tests (template rendering, variable substitution)
+  - [x] Level 2: Import tests (SDK compatibility verification)
+  - [x] Level 3: Runtime tests (agent initialization, server startup)
+  - [x] Level 4: Integration tests (backend + frontend communication)
+  - [x] Frontend compile tests (npm run build verification)
+  - [x] Sandbox Docker environment for isolated testing
+  - [x] Test fixtures and conftest.py configuration
+  - [x] pytest markers for running tests by level
+  - [x] **Automatic TDD enforcement** - IPC operations block delivery if tests fail
+- [x] Phase 6: Context7 Live Knowledge Integration - **100% COMPLETE**
+  - [x] Context7 Verifier module (`nanoclaw/container/agent-runner/src/context7/`)
+  - [x] 7 mandatory SDK query points (agent_class, tools, chatkit, nextjs)
+  - [x] 30-minute TTL cache for Context7 responses
+  - [x] Pattern comparator (detect SDK signature changes)
+  - [x] Reference updater (auto-update `.claude/skills/*/references/*.md`)
+  - [x] Template updater (auto-update `templates/*.template`)
+  - [x] IPC integration (`generate_from_template` + `generate_frontend_from_template`)
+  - [x] Graceful fallback when Context7 unavailable
+  - [x] Skill documentation updated
+- [x] Phase 7: Verification Sandbox (Pre-delivery Testing) - **100% COMPLETE**
+  - [x] Verification module (`nanoclaw/container/agent-runner/src/verification/`)
+  - [x] 4-level testing (syntax, import, runtime, integration)
+  - [x] Auto-fix loop using Skills, Templates, Context7
+  - [x] Human alert on EVERY attempt (WhatsApp via IPC)
+  - [x] Max 3 attempts before human escalation
+  - [x] Backend endpoint verification (all custom routes)
+  - [x] Frontend npm run build verification
+  - [x] IPC tools (`verify_project`, `validate_project_code`)
+  - [x] `verify_before_delivery` parameter in template generation
+  - [x] Delivery blocked if Level 1-2 fail
 - [ ] WhatsApp connected (requires QR scan)
 - [ ] End-to-end testing via WhatsApp
 

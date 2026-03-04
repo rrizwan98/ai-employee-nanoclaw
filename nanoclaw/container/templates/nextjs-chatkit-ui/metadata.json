@@ -48,6 +48,7 @@
     {"name": "COMPANY_NAME", "description": "Company or brand name", "required": true},
     {"name": "DESCRIPTION", "description": "Website meta description", "default": "A modern web application"},
     {"name": "PRIMARY_COLOR", "description": "Primary brand color (hex)", "default": "#6366F1"},
+    {"name": "PRIMARY_COLOR_NAME", "description": "Primary color name for Tailwind (e.g., blue, sky, red)", "default": "blue"},
     {"name": "BACKEND_URL", "description": "ChatKit backend API URL", "default": "http://localhost:8000/chatkit"},
     {"name": "DOMAIN_KEY", "description": "ChatKit domain key", "default": "local-dev"},
     {"name": "CHAT_GREETING", "description": "Chat widget greeting message", "default": "Hi! How can I help you today?"},

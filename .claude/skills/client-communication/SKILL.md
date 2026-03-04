@@ -372,7 +372,7 @@ When to transition:
 2. **NEVER** write frontend code manually - templates have correct ChatKit integration
 
 3. **ALWAYS** ensure generated code uses:
-   - `@openai/chatkit-react@^0.1.9`
+   - `@openai/chatkit-react@^1.5.0`
    - `useChatKit` hook
    - `<ChatKit>` component
 

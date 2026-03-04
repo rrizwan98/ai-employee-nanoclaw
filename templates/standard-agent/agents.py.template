@@ -45,7 +45,7 @@ tools = [
     ),
 {% endif %}
 {% if "code_interpreter" in TOOLS.hosted %}
-    CodeInterpreterTool(),
+    CodeInterpreterTool(tool_config={"type": "code_interpreter"}),
 {% endif %}
 {% if "image_generation" in TOOLS.hosted %}
     ImageGenerationTool(),

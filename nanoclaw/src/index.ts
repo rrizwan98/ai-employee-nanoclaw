@@ -9,6 +9,7 @@ import {
   MAIN_GROUP_FOLDER,
   POLL_INTERVAL,
   TRIGGER_PATTERN,
+  isNumberAllowed,
 } from './config.js';
 import { WhatsAppChannel } from './channels/whatsapp.js';
 import {
@@ -346,6 +347,9 @@ async function startMessageLoop(): Promise<void> {
         }
 
         for (const [chatJid, groupMessages] of messagesByGroup) {
+          // Filter: Only process messages from allowed numbers
+          if (!isNumberAllowed(chatJid)) continue;
+
           const group = registeredGroups[chatJid];
           if (!group) continue;
 
@@ -566,6 +570,12 @@ async function main(): Promise<void> {
   // Channel callbacks (shared by all channels)
   const channelOpts = {
     onMessage: (chatJid: string, msg: NewMessage) => {
+      // Filter: Only allow messages from approved numbers
+      if (!isNumberAllowed(chatJid)) {
+        // Silently ignore messages from non-allowed numbers
+        return;
+      }
+
       // Auto-register DMs on first message
       if (chatJid.endsWith('@s.whatsapp.net') && !msg.is_from_me) {
         autoRegisterDM(chatJid, msg.sender_name);

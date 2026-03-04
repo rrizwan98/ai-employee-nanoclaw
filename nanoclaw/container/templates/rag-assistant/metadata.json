@@ -1,88 +1,33 @@
 {
   "name": "rag-assistant",
-  "display_name": "RAG Assistant",
-  "description": "Document search and Q&A agent using OpenAI File Search with vector stores",
-  "version": "1.0.0",
-  "author": "AI Employee",
-  "category": "knowledge",
-  "tags": ["rag", "search", "documents", "qa", "vector-store", "file-search"],
-  "variables": {
-    "AGENT_NAME": {
-      "description": "Name of the RAG assistant",
-      "type": "string",
-      "default": "DocumentAssistant",
-      "required": true
-    },
-    "DOMAIN": {
-      "description": "Domain or topic area of the knowledge base",
-      "type": "string",
-      "default": "General Knowledge",
-      "required": true
-    },
-    "VECTOR_STORE_ID": {
-      "description": "OpenAI vector store ID (created via setup_vectorstore.py)",
-      "type": "string",
-      "default": "vs_xxxxxxxxxxxxxxxxxxxxxx",
-      "required": true
-    },
-    "MAX_RESULTS": {
-      "description": "Maximum number of search results to retrieve",
-      "type": "number",
-      "default": 10,
-      "required": false
-    },
-    "INCLUDE_CITATIONS": {
-      "description": "Include source citations in responses",
-      "type": "boolean",
-      "default": true,
-      "required": false
-    }
-  },
-  "features": [
-    "Semantic document search using vector embeddings",
-    "OpenAI File Search Tool integration",
-    "Multi-format document support (PDF, TXT, DOCX, MD, JSON, CSV, XML)",
-    "Dynamic document upload via API",
-    "Conversational context with session management",
-    "Optional citation support for transparency",
-    "RESTful API with FastAPI",
-    "Docker container deployment",
-    "Vector store management tools"
+  "displayName": "RAG Assistant",
+  "description": "Document search and Q&A agent using OpenAI File Search with vector stores and ChatKit integration",
+  "version": "2.0.0",
+  "agents": ["rag_agent"],
+  "patterns": ["rag", "file-search", "chatkit"],
+  "sdkFeatures": ["FileSearchTool", "vector_stores", "sessions", "chatkit"],
+  "useCases": ["knowledge base", "document search", "Q&A", "research assistant"],
+  "keywords": ["rag", "knowledge", "document", "search", "vector", "file-search", "qa"],
+  "complexity": "medium",
+  "files": [
+    {"path": "main.py", "template": "main.py.template"},
+    {"path": "server.py", "template": "server.py.template"},
+    {"path": "store.py", "template": "store.py.template"},
+    {"path": "agents/__init__.py", "template": "agents/__init__.py.template"},
+    {"path": "agents/rag_agent.py", "template": "agents/rag_agent.py.template"},
+    {"path": "tools/document_tools.py", "template": "tools/document_tools.py.template"},
+    {"path": "config.py", "template": "config.py.template"},
+    {"path": "requirements.txt", "template": "requirements.txt"},
+    {"path": ".env.example", "template": ".env.example"},
+    {"path": "Dockerfile", "template": "Dockerfile"},
+    {"path": "README.md", "template": "README.md.template"},
+    {"path": "setup_vectorstore.py", "template": "setup_vectorstore.py.template"}
   ],
-  "requirements": {
-    "openai_api_key": true,
-    "vector_store": true,
-    "documents": true
-  },
-  "setup_steps": [
-    "Install dependencies: pip install -r requirements.txt",
-    "Set OPENAI_API_KEY in .env",
-    "Create vector store: python setup_vectorstore.py --name 'Knowledge Base' --docs ./documents/",
-    "Add VECTOR_STORE_ID to .env",
-    "Run server: python main.py"
-  ],
-  "endpoints": {
-    "POST /chat": "Send messages to the RAG agent",
-    "POST /upload": "Upload documents to vector store",
-    "GET /documents": "List all documents in vector store",
-    "GET /vectorstore": "Get vector store information",
-    "GET /health": "Health check"
-  },
-  "use_cases": [
-    "Customer support knowledge base",
-    "Internal documentation search",
-    "Research assistant",
-    "Legal document analysis",
-    "Educational content Q&A",
-    "Product documentation helper"
-  ],
-  "technologies": [
-    "OpenAI Agents SDK",
-    "OpenAI File Search Tool",
-    "Vector Stores (OpenAI)",
-    "FastAPI",
-    "Python 3.11+",
-    "SQLite (session storage)",
-    "Docker"
+  "variables": [
+    {"name": "AGENT_NAME", "description": "Name of the RAG assistant", "required": true},
+    {"name": "DOMAIN", "description": "Domain or topic area of the knowledge base", "required": true},
+    {"name": "VECTOR_STORE_ID", "description": "OpenAI vector store ID", "required": true},
+    {"name": "MAX_RESULTS", "description": "Maximum search results to retrieve", "default": "10"},
+    {"name": "INCLUDE_CITATIONS", "description": "Include source citations in responses", "default": "true"}
   ]
 }

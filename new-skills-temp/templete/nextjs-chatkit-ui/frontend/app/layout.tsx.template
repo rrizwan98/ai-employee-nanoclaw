@@ -1,33 +1,42 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import ChatProvider from '@/components/chat/ChatProvider';
-
-const inter = Inter({ subsets: ['latin'] });
+import type { Metadata } from 'next'
+import Script from 'next/script'
+import './globals.css'
+import { Header } from '@/components/layout/Header'
+import { Footer } from '@/components/layout/Footer'
+import ChatWidget from '@/components/chat/ChatWidget'
 
 export const metadata: Metadata = {
   title: '{{project_title}}',
   description: '{{description}}',
-};
+  icons: {
+    icon: '/favicon.ico',
+  },
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="{{color_scheme}}">
-      <body className={`${inter.className} bg-white dark:bg-gray-950 text-gray-900 dark:text-white`}>
-        <ChatProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </ChatProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* ChatKit CDN Script - REQUIRED for chat widget */}
+        <Script
+          src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
+          strategy="beforeInteractive"
+        />
+      </head>
+      <body className="antialiased bg-white text-gray-900">
+        <Header />
+        <main className="min-h-screen">
+          {children}
+        </main>
+        <Footer />
+        <ChatWidget />
       </body>
     </html>
-  );
+  )
 }

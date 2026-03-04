@@ -5,7 +5,7 @@ Validates incoming {{INPUT_TYPE}} data and structures it according to
 {{DOMAIN}} validation rules: {{VALIDATION_RULES}}
 """
 
-from agents_sdk import Agent
+from agents import Agent
 from models.schemas import ValidatedInput
 from config import settings
 

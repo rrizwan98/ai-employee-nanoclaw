@@ -7,9 +7,61 @@ description: Gather client requirements for AI agent building through structured
 
 Extract client requirements through targeted questions and produce structured AgentConfig JSON for code generation.
 
-## Question Flow (Maximum 7 Questions)
+## References
+
+| Reference | Description |
+|-----------|-------------|
+| [openai-agents-sdk-capabilities.md](references/openai-agents-sdk-capabilities.md) | All SDK capabilities for questions |
+| [agent-config-schema.md](references/agent-config-schema.md) | Complete AgentConfig JSON schema |
+
+---
+
+## Quick Question Flow
+
+Ask **maximum 5-7 questions** based on context:
+
+| # | Question | Required | Maps To |
+|---|----------|----------|---------|
+| Q1 | What does agent do? | ✅ Yes | description, instructions |
+| Q2 | Text or voice? | Auto-detect | agent_type |
+| Q3 | What tools needed? | ✅ Yes | tools |
+| Q4 | Remember conversations? | If relevant | memory |
+| Q5 | What specialists? | If multi-agent | handoffs |
+| Q6 | Structured output? | If data processing | output |
+| Q7 | Docker deployment? | ✅ Yes | deployment |
+| Q8 | Need website/UI? | Recommended | frontend |
+
+---
+
+## Smart Auto-Detection
+
+### Agent Type Detection
+
+**Before asking Q2**, detect from keywords:
+
+| Keywords | Set agent_type | Skip Q2 |
+|----------|---------------|---------|
+| voice, phone, call, speak, audio, realtime | "realtime" | ✅ |
+| team, specialists, departments, routing, handoff | "multi-agent" | ✅ |
+| bot, chatbot, assistant, FAQ | "standard" | ✅ |
+
+### Frontend Detection
+
+**Auto-set `needs_frontend: true`** when client mentions:
+
+| Keywords | Frontend Type |
+|----------|--------------|
+| website, landing page, full site | full_website |
+| chat widget, embed, just chat | chat_widget |
+| test, try, use agent (unclear) | full_website |
+| API, backend only | api_only |
+
+---
+
+## Question Templates
 
 ### Q1: Purpose (Required)
+
 ```
 What will your agent help with?
 
@@ -21,116 +73,99 @@ Examples:
 - Task automation
 ```
 
-**Maps to:** `description`, `instructions`
+### Q2: Agent Type (If not auto-detected)
 
-### Q2: Agent Type (Required)
 ```
 What type of interaction?
 
-1. Text chatbot (web/API)
-2. Voice assistant (phone/realtime)
-3. Multiple specialists working together
+1. 💬 Text chatbot (web/API)
+2. 🎤 Voice assistant (phone/realtime)
+3. 👥 Multiple specialists working together
 ```
 
-**Maps to:** `agent_type` (standard | realtime | multi-agent)
-
 ### Q3: Tools (Required)
+
 ```
 Which capabilities do you need?
 
-1. Web search (find info online)
-2. Document search (your files/knowledge base)
-3. Code execution (calculations, data analysis)
-4. Image generation (create images)
-5. Custom actions (database, email, API calls)
+1. 🔍 Web search - Find current information online
+2. 📄 Document search - Search your own files
+3. 🧮 Code execution - Calculations, data analysis
+4. 🎨 Image generation - Create images
+5. ⚙️ Custom actions - Connect to your systems
 ```
 
-**Maps to:** `tools.hosted`, `tools.custom`
+### Q4: Memory
 
-### Q4: Memory (If applicable)
 ```
 Should it remember past conversations?
 
-1. No memory (each conversation fresh)
-2. Simple memory (local storage)
-3. Scalable memory (for many users)
+1. ❌ No memory - Each chat starts fresh
+2. 💾 Simple memory - Remember on one server
+3. ☁️ Scalable memory - For many users
 ```
 
-**Maps to:** `memory.type` (none | sqlite | redis)
+### Q5: Multi-Agent Specialists
 
-### Q5: Multi-Agent (If Q2 = multi-agent)
 ```
 What specialists do you need?
 
-Example: "Billing support, Technical support, General inquiries"
+Examples:
+- Billing support (payments, invoices)
+- Technical support (bugs, errors)
+- Sales (pricing, products)
 ```
 
-**Maps to:** `handoffs[]`
+### Q6: Structured Output
 
-### Q6: Output Format (If data processing)
 ```
 Do you need structured data output?
 
-1. Free text responses
-2. Structured data (JSON format)
+1. 📝 Free text responses
+2. 📊 Structured data (JSON format)
 
 If structured, what fields? Example: "name, date, amount"
 ```
 
-**Maps to:** `output.type`, `output.schema`
+### Q7: Deployment
 
-### Q7: Deployment (Required)
 ```
 How will you run this agent?
 
-1. Local (your computer)
-2. Docker container
-3. Cloud server
+1. 🖥️ Local (your computer)
+2. 🐳 Docker container (recommended)
+3. ☁️ Cloud server
 ```
 
-**Maps to:** `deployment.type`
+### Q8: Frontend
 
-### Q8: Frontend/UI (Optional but Recommended)
 ```
 Do you need a website/UI to use your agent?
 
-1. Yes - Full website with chat (landing page + chat widget)
-2. Yes - Just a chat widget (to embed in existing site)
-3. No - API only (I'll build my own frontend)
+1. 🌐 Yes - Full website with chat
+2. 💬 Yes - Just a chat widget
+3. 🔌 No - API only
 ```
 
-**Maps to:** `needs_frontend`, `frontend_type`
+---
 
-**IMPORTANT Frontend Rules:**
-- If client says "test", "try", "use the agent" → Assume they need frontend
-- If client says "website", "landing page", "UI" → needs_frontend: true
-- Default to option 1 (full website) if unclear
+## Realtime Agent Configuration
 
-## Automatic Agent Type Detection
+When `agent_type: "realtime"`, ask additional voice question:
 
-Detect agent type from keywords before asking Q2:
+```
+What voice style do you prefer?
 
-### Realtime/Voice Detection Keywords
+1. Neutral/balanced (alloy)
+2. Warm/natural (ash)
+3. Clear/professional (echo)
+4. Expressive/dynamic (fable)
+5. Deep/authoritative (onyx)
+6. Energetic/friendly (nova)
+7. Soft/calming (shimmer)
+```
 
-| Language | Keywords |
-|----------|----------|
-| English | voice, phone, call, speak, talk, audio, realtime, real-time, conversation, telephone, IVR |
-| Urdu | awaaz, phone, call, baat, sunna, bolna |
-
-If detected → Set `agent_type: "realtime"` and skip Q2.
-
-### Multi-Agent Detection Keywords
-
-| Language | Keywords |
-|----------|----------|
-| English | team, specialists, departments, routing, handoff, transfer, multiple agents |
-| Urdu | team, departments, transfer |
-
-If detected → Set `agent_type: "multi-agent"` and ask Q5.
-
-### Realtime Config Defaults
-
-When `agent_type: "realtime"`:
+**Realtime Defaults:**
 
 ```json
 {
@@ -145,61 +180,52 @@ When `agent_type: "realtime"`:
 }
 ```
 
-### Voice Selection (Optional Q for Realtime)
+---
+
+## Smart Defaults
+
+When not explicitly stated, use these defaults:
+
+| Requirement | Default Value |
+|-------------|---------------|
+| Memory | "sqlite" for multi-turn, "none" for single query |
+| Deployment | "docker" |
+| Server | "fastapi" |
+| Port | 8000 |
+| Guardrails | ["max_length"], ["no_pii"] |
+| Frontend | Assume "full_website" if unclear |
+
+---
+
+## Confirmation Template
+
+After all questions:
 
 ```
-What voice style do you prefer?
+Great! Here's what I understand:
 
-1. Neutral/balanced (alloy)
-2. Warm/conversational (echo)
-3. Expressive/storytelling (fable)
-4. Deep/authoritative (onyx)
-5. Energetic/friendly (nova)
-6. Soft/calming (shimmer)
-7. Clear/professional (ash)
+📋 Agent: [name]
+🎯 Type: [standard/realtime/multi-agent]
+🔧 Tools: [list]
+💾 Memory: [type]
+📤 Output: [text/structured]
+🚀 Deploy: [docker/local]
+🌐 Frontend: [Yes - Full website / Yes - Chat widget only / No - API only]
+
+Should I proceed with this design?
 ```
 
-**Maps to:** `realtime_config.voice`
-
-## Smart Question Selection
-
-Not all questions needed every time:
-
-| If Client Says | Skip Questions |
-|----------------|----------------|
-| "simple chatbot" | Q5, Q6 |
-| "voice assistant" | Q2, Q6 (auto-detect realtime) |
-| "phone bot" | Q2, Q6 (auto-detect realtime) |
-| "just FAQ bot" | Q4, Q5, Q6 |
-| "data extraction" | Q2 (assume standard), Q5 |
-| "support team" | Q2 (auto-detect multi-agent) |
-
-## Frontend Auto-Detection
-
-Automatically set `needs_frontend: true` when client mentions:
-
-| Language | Keywords |
-|----------|----------|
-| English | website, frontend, UI, landing page, chat widget, test agent, try agent, use agent, interface, web app, dashboard, portal |
-| Urdu | website, page, test karna, use karna, dekh sakein |
-
-**Frontend Type Selection:**
-
-| Keywords | Frontend Type | Template |
-|----------|--------------|----------|
-| "full website", "landing page", "complete site" | `full_website` | `nextjs-chatkit-ui` |
-| "chat widget", "embed", "just chat" | `chat_widget` | `chatkit-react` |
-| "test", "try", "use" (unclear) | `full_website` | `nextjs-chatkit-ui` |
+---
 
 ## AgentConfig JSON Output
 
-After gathering requirements, produce:
+After confirmation, produce complete AgentConfig:
 
 ```json
 {
   "agent_type": "standard",
   "name": "CustomerSupportBot",
-  "description": "Customer support chatbot for e-commerce",
+  "description": "Customer support chatbot",
   "instructions": "You are a helpful customer support agent...",
 
   "tools": {
@@ -210,16 +236,15 @@ After gathering requirements, produce:
 
   "memory": {
     "type": "sqlite",
-    "config": {
-      "db_path": "conversations.db"
-    }
+    "config": {"db_path": "conversations.db"}
   },
 
   "handoffs": [],
 
   "guardrails": {
     "input": ["max_length"],
-    "output": ["no_pii"]
+    "output": ["no_pii"],
+    "tools": []
   },
 
   "output": {
@@ -248,47 +273,34 @@ After gathering requirements, produce:
 
   "metadata": {
     "client_jid": "923001234567@s.whatsapp.net",
-    "created_at": "2026-02-20T12:00:00Z",
+    "created_at": "2026-02-26T12:00:00Z",
     "version": "1.0"
   }
 }
 ```
 
-## Requirement Inference
+---
 
-Make smart defaults when not explicitly stated:
+## Tool-to-Config Mapping
 
-| Requirement | Default |
-|-------------|---------|
-| Memory not mentioned | `sqlite` for multi-turn, `none` for single query |
-| Deployment not mentioned | `docker` |
-| Server type | `fastapi` if API needed, `none` for CLI |
-| Guardrails | Always include `max_length`, `no_pii` |
+| Client Says | tools.hosted |
+|-------------|--------------|
+| "search web", "find online" | ["web_search"] |
+| "search docs", "knowledge base" | ["file_search"] |
+| "calculate", "analyze data" | ["code_interpreter"] |
+| "create images" | ["image_generation"] |
+| "automate browser" | ["computer"] |
 
-## Confirmation Template
+| Client Says | tools.custom |
+|-------------|--------------|
+| "check inventory" | ["check_inventory"] |
+| "send email" | ["send_email"] |
+| "book appointment" | ["book_appointment"] |
+| "connect to database" | ["query_database"] |
 
-After all questions:
-
-```
-Great! Here's what I understand:
-
-📋 Agent: [name]
-🎯 Type: [standard/realtime/multi-agent]
-🔧 Tools: [list]
-💾 Memory: [type]
-📤 Output: [text/structured]
-🚀 Deploy: [docker/local]
-🌐 Frontend: [Yes - Full website / Yes - Chat widget only / No - API only]
-
-Should I proceed with this design?
-```
+---
 
 ## Handling Unclear Responses
-
-If client's answer is unclear:
-- Offer examples
-- Ask follow-up
-- Suggest most common option
 
 ```
 Client: "I want it to do everything"
@@ -301,6 +313,28 @@ Employee: "I understand! Let me suggest the most common setup:
 Would you like to add or remove anything?"
 ```
 
+```
+Client: "Just make it good"
+
+Employee: "I'll set up a recommended configuration:
+- FAQ bot with web search
+- Conversation memory
+- Full website to test it
+
+Does this work for you?"
+```
+
+---
+
 ## Handoff to agent-builder
 
-Once confirmed, pass AgentConfig JSON to `agent-builder` skill for design and template selection.
+Once confirmed, pass AgentConfig JSON to `agent-builder` skill:
+
+1. AgentConfig JSON is complete
+2. Client has confirmed requirements
+3. Frontend template identified (if needed)
+
+The `agent-builder` skill will:
+- Design architecture based on AgentConfig
+- Select appropriate SDK patterns
+- Prepare for code generation

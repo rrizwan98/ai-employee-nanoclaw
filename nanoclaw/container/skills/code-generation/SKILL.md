@@ -9,6 +9,163 @@ Generate complete, runnable OpenAI Agents SDK code from AgentConfig and architec
 
 ---
 
+## ⛔⛔⛔ STOP! READ THIS FIRST! ⛔⛔⛔
+
+### YOU ARE FORBIDDEN FROM WRITING CODE MANUALLY!
+
+**MANDATORY: Use IPC Template Tools for ALL code generation!**
+
+```
+⛔ DO NOT write store.py manually - USE generate_from_template IPC tool!
+⛔ DO NOT write server.py manually - USE generate_from_template IPC tool!
+⛔ DO NOT write ChatWidget.tsx manually - USE generate_frontend_from_template IPC tool!
+⛔ DO NOT write layout.tsx manually - USE generate_frontend_from_template IPC tool!
+```
+
+### Required IPC Workflow:
+
+**Backend:**
+```
+1. match_template(request) → Get template name
+2. load_template(name) → Get template files
+3. generate_from_template(name, variables) → Generate code
+4. Deliver AS-IS (NO MODIFICATIONS!)
+```
+
+**Frontend:**
+```
+1. is_frontend_request(request) → Check if frontend
+2. match_frontend_template(request) → Get template name
+3. generate_frontend_from_template(name, variables) → Generate code
+4. Deliver AS-IS (NO MODIFICATIONS!)
+```
+
+### ⛔ FORBIDDEN IMPORTS - YOUR TRAINING DATA IS WRONG!
+
+```python
+# ❌ WRONG - These are from your outdated training data!
+from chatkit.stores import Store  # WRONG! It's chatkit.store (singular)
+from chatkit.types import AttachmentItem  # WRONG! It's Attachment
+from chatkit.types import ContentItem  # WRONG! Doesn't exist
+
+# ❌ WRONG - OpenAI Agents SDK imports - YOUR TRAINING IS OUTDATED!
+from agents.tools import WebSearchTool      # ❌ WRONG! No agents.tools module!
+from agents.tools import FileSearchTool     # ❌ WRONG! No agents.tools module!
+from agents.tools import CodeInterpreterTool # ❌ WRONG! No agents.tools module!
+from agents_sdk import Agent                 # ❌ WRONG! Package is "agents" not "agents_sdk"!
+from openai_agents import Agent              # ❌ WRONG! Package is "agents"!
+```
+
+### ✅ CORRECT OpenAI Agents SDK Imports:
+
+```python
+# ✅ CORRECT - All tools import directly from "agents" package
+from agents import Agent                    # ✅ CORRECT
+from agents import Runner                   # ✅ CORRECT
+from agents import WebSearchTool            # ✅ CORRECT
+from agents import FileSearchTool           # ✅ CORRECT
+from agents import CodeInterpreterTool      # ✅ CORRECT
+from agents import ImageGenerationTool      # ✅ CORRECT
+from agents import ComputerTool             # ✅ CORRECT
+from agents import HostedMCPTool            # ✅ CORRECT
+from agents import function_tool            # ✅ CORRECT
+from agents import SQLiteSession            # ✅ CORRECT
+```
+
+```tsx
+// ❌ WRONG - These are from your outdated training data!
+<Script onLoad={() => ...} />  // WRONG! No onLoad in Server Component
+import { useChatKit } from '@openai/chatkit-react'  // WRONG! Use CDN
+```
+
+### ✅ Templates Have Correct Code - USE THEM!
+
+Templates use:
+- `from chatkit.store import Store` (singular)
+- `from chatkit.types import Attachment` (not AttachmentItem)
+- No `onLoad` on Script components
+- CDN web component approach
+
+**DO NOT OVERRIDE TEMPLATES WITH YOUR KNOWLEDGE!**
+
+---
+
+## CRITICAL: MANDATORY Template Usage
+
+**YOU MUST COPY CODE TEMPLATES EXACTLY FROM THIS SKILL. DO NOT MODIFY METHOD SIGNATURES!**
+
+### ChatKit Store - EXACT Signatures Required
+
+```python
+# MANDATORY: Store[dict] with context: dict in ALL methods
+class InMemoryStore(Store[dict]):
+    async def load_thread(self, thread_id: str, context: dict) -> ThreadMetadata:
+    async def save_thread(self, thread: ThreadMetadata, context: dict) -> None:
+    async def load_threads(self, limit: int, after: Optional[str], order: str, context: dict) -> Page[ThreadMetadata]:
+    async def load_thread_items(self, thread_id: str, after: Optional[str], limit: int, order: str, context: dict) -> Page[ThreadItem]:
+    async def add_thread_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+    async def delete_thread_item(self, thread_id: str, item_id: str, context: dict) -> None:
+    async def load_item(self, thread_id: str, item_id: str, context: dict) -> ThreadItem:
+    async def save_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+    async def load_attachment(self, attachment_id: str, context: dict) -> Attachment:
+    async def save_attachment(self, attachment: Attachment, context: dict) -> None:
+    async def delete_attachment(self, attachment_id: str, context: dict) -> None:
+    async def delete_thread(self, thread_id: str, context: dict) -> None:
+```
+
+### ChatKitServer respond() - EXACT Signature Required
+
+```python
+# MANDATORY: This exact signature
+async def respond(
+    self,
+    thread: ThreadMetadata,
+    input_user_message: UserMessageItem | None,
+    context: dict,
+) -> AsyncIterator[ThreadStreamEvent]:
+```
+
+### FORBIDDEN Patterns - NEVER USE:
+
+```python
+# WRONG - Missing context parameter
+async def load_thread(self, thread_id: str) -> ThreadMetadata:  # FORBIDDEN!
+async def save_thread(self, thread: ThreadMetadata) -> None:  # FORBIDDEN!
+
+# WRONG - Wrong parameter names
+async def load_threads(self, limit: int, after_id: str) -> Page:  # FORBIDDEN!
+async def load_thread_items(self, thread_id: str, before_id: str) -> Page:  # FORBIDDEN!
+
+# WRONG - Wrong Page format
+return Page(items=data, has_more=True)  # FORBIDDEN! Use: Page(data=..., has_more=..., after=...)
+
+# WRONG - Store without generic type
+class InMemoryStore(Store):  # FORBIDDEN! Use: Store[dict]
+```
+
+### Pre-Delivery Checklist
+
+Before delivering ANY code, verify:
+- [ ] `store.py` class is `InMemoryStore(Store[dict])`
+- [ ] ALL store methods have `context: dict` as LAST parameter
+- [ ] `load_threads(limit, after, order, context)` - exact param order
+- [ ] `load_thread_items(thread_id, after, limit, order, context)` - exact param order
+- [ ] `Page(data=..., has_more=..., after=...)` - exact field names
+- [ ] `respond(thread, input_user_message, context)` - exact signature
+
+---
+
+## References
+
+| Reference | Description |
+|-----------|-------------|
+| [code-templates.md](references/code-templates.md) | Complete code templates for all agent types |
+| [import-mappings.md](references/import-mappings.md) | Config to Python import mappings |
+
+**See `../agent-builder/references/` for SDK pattern details.**
+
+---
+
 ## Context7: Up-to-Date Documentation
 
 **Use Context7 tools to verify SDK patterns before code generation!**
@@ -38,44 +195,115 @@ Next.js:           /vercel/next.js
 
 ---
 
-## FORBIDDEN - NEVER DO THIS (MANDATORY)
+## IMPORTANT: Use CDN Approach for ChatKit (NOT npm package)
 
-**These rules are ABSOLUTE and must NEVER be violated:**
+**DO NOT USE** `@openai/chatkit-react` npm package for self-hosted backends - it requires a valid `domainKey` from OpenAI Platform and won't work with localhost.
 
-### Frontend Code - FORBIDDEN Actions:
+**USE** the CDN script approach which works with any self-hosted backend.
 
-1. **NEVER** write `ChatWidget.tsx` manually - ALWAYS use template
-2. **NEVER** use `useState`, `useEffect`, `useRef` for chat functionality
-3. **NEVER** use `fetch()` or `axios` for chat API calls
-4. **NEVER** import `lucide-react` icons (MessageCircle, Send, X) for chat
-5. **NEVER** create custom message bubbles or chat UI components
-6. **NEVER** write SSE/streaming code manually for chat
-7. **NEVER** use any version other than `@openai/chatkit-react@^0.1.9`
+### FORBIDDEN - NEVER DO THIS:
 
-### What MUST Be Used Instead:
+1. **NEVER** use `@openai/chatkit-react` npm package
+2. **NEVER** use `useChatKit` hook from npm package
+3. **NEVER** add `@openai/chatkit-react` to package.json
+
+### What MUST Be Used Instead (CDN Approach):
+
+**Step 1: Add CDN Script to layout.tsx `<head>`:**
 
 ```typescript
-// CORRECT - Only this pattern is allowed for chat:
-import { ChatKit, useChatKit } from '@openai/chatkit-react';
+// app/layout.tsx
+import Script from 'next/script';
 
-const { control } = useChatKit({
-  api: { url: apiUrl, domainKey: domainKey },
-  theme: { colorScheme: 'light', radius: 'round' },
-  startScreen: { greeting: 'Hello!' },
-});
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <head>
+        <Script
+          src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
+          strategy="beforeInteractive"
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
 
-return <ChatKit control={control} className="h-full w-full" />;
+**Step 2: ChatWidget.tsx using Web Component:**
+
+```typescript
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+
+interface ChatKitElement extends HTMLElement {
+  setOptions: (options: any) => void
+}
+
+export default function ChatWidget() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isChatKitLoaded, setIsChatKitLoaded] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isInitialized = useRef(false)
+
+  useEffect(() => {
+    const checkChatKit = () => {
+      if (typeof window !== 'undefined' && window.customElements?.get('openai-chatkit')) {
+        setIsChatKitLoaded(true)
+      }
+    }
+    checkChatKit()
+    const interval = setInterval(checkChatKit, 500)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    if (isChatKitLoaded && !isInitialized.current && containerRef.current) {
+      const chatkit = document.createElement('openai-chatkit') as ChatKitElement
+      chatkit.style.width = '100%'
+      chatkit.style.height = '100%'
+      containerRef.current.appendChild(chatkit)
+      isInitialized.current = true
+
+      setTimeout(() => {
+        if (chatkit.setOptions) {
+          chatkit.setOptions({
+            api: {
+              domainKey: 'local-dev',
+              url: process.env.NEXT_PUBLIC_CHATKIT_API_URL || 'http://localhost:8000/chatkit',
+            },
+          })
+        }
+      }, 100)
+    }
+  }, [isChatKitLoaded])
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.style.display = isOpen ? 'block' : 'none'
+    }
+  }, [isOpen])
+
+  return (
+    <>
+      <div ref={containerRef} className="fixed bottom-24 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl z-50" style={{ display: 'none' }} />
+      <button onClick={() => setIsOpen(!isOpen)} className="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 text-white rounded-full z-50">
+        {isOpen ? '✕' : '💬'}
+      </button>
+    </>
+  )
+}
 ```
 
 ### Validation Check:
 
 Before delivering ANY frontend code, verify:
-- [ ] `ChatWidget.tsx` contains `import { ChatKit, useChatKit } from '@openai/chatkit-react'`
-- [ ] `ChatWidget.tsx` does NOT contain `useState` for messages
-- [ ] `ChatWidget.tsx` does NOT contain `fetch()` or `axios`
-- [ ] `package.json` contains `"@openai/chatkit-react": "^0.1.9"`
-
-**If validation fails, regenerate using `generate_frontend_from_template` tool.**
+- [ ] `layout.tsx` contains CDN script in `<head>`
+- [ ] `ChatWidget.tsx` uses `document.createElement('openai-chatkit')`
+- [ ] `ChatWidget.tsx` uses `chatkit.setOptions()` for configuration
+- [ ] `package.json` does NOT contain `@openai/chatkit-react`
+- [ ] All interactive components have `'use client'` directive
 
 ---
 
@@ -130,12 +358,13 @@ Step 6: Deliver generated files (DO NOT MODIFY ChatWidget.tsx!)
 
 **CRITICAL - ALWAYS FOLLOW:**
 
-1. **ALWAYS** use `@openai/chatkit-react` for chat features
-2. **NEVER** create custom axios/fetch chat implementations
-3. **ALWAYS** use template structure: `components/ui/`, `components/chat/`, etc.
-4. **ALWAYS** include `ChatProvider` and `ChatWidget` components
-5. **ALWAYS** connect to backend `/chatkit` endpoint
-6. **ALWAYS** use template IPC tools - manual code is FORBIDDEN
+1. **ALWAYS** use CDN approach for ChatKit (NOT npm package)
+2. **ALWAYS** add CDN script to layout.tsx `<head>`
+3. **ALWAYS** use `document.createElement('openai-chatkit')` web component
+4. **ALWAYS** use `chatkit.setOptions()` for configuration
+5. **ALWAYS** add `'use client'` directive to ALL interactive components
+6. **ALWAYS** connect to backend `/chatkit` endpoint
+7. **NEVER** use `@openai/chatkit-react` npm package
 
 ### Frontend Progress Updates
 
@@ -263,14 +492,112 @@ from agents import Agent
 from agents import WebSearchTool
 ```
 
-### Step 5: Validation
+### Step 5: TDD Validation (MANDATORY - 4-Level Testing)
 
-Before packaging, validate:
+**CRITICAL**: Before delivery, ALL generated code MUST pass the 4-Level TDD tests.
 
-- [ ] All imports resolve correctly
-- [ ] No placeholder variables remain (`{{...}}`)
-- [ ] Required files exist (main.py, requirements.txt)
-- [ ] Dockerfile builds successfully (if docker deployment)
+#### Level 1: Syntax Tests (~5 seconds)
+```bash
+pytest -m level1 -v
+```
+Validates:
+- Template rendering completed
+- All variables substituted (no `{{VARIABLE}}` remaining)
+- Valid Python syntax (ast.parse succeeds)
+- No template placeholders in output
+
+#### Level 2: Import Tests (~15 seconds)
+```bash
+pytest -m level2 -v
+```
+Validates:
+- OpenAI Agents SDK imports work (`from agents import Agent, Runner`)
+- Tool instantiation signatures are correct
+- ChatKit imports use singular `chatkit.store` (NOT `chatkit.stores`)
+- FastAPI and Pydantic imports resolve
+- Typing imports present when type hints used
+
+#### Level 3: Runtime Tests (~60 seconds, requires Docker)
+```bash
+pytest -m level3 --use-sandbox -v
+```
+Validates:
+- Agent initialization succeeds (no missing parameters)
+- CodeInterpreterTool has `tool_config` if required
+- Server starts without errors
+- Frontend builds successfully (npm run build)
+- `"use client"` directive present in React components
+- TypeScript compilation passes
+
+#### Level 4: Integration Tests (~120 seconds, requires Docker)
+```bash
+pytest -m level4 --use-sandbox -v
+```
+Validates:
+- Health endpoint returns `{"status": "healthy"}`
+- CORS configuration allows frontend
+- Chat message round-trip works
+- Session persistence across messages
+- Thread creation and listing
+- Error responses have proper JSON format
+
+#### Validation Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              PRE-DELIVERY VALIDATION (MANDATORY)             │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. Run Level 1 tests: pytest -m level1 -v                  │
+│                          ↓                                   │
+│  2. Check: ALL tests pass?                                  │
+│         ↓ NO                    ↓ YES                       │
+│  ┌──────────────┐        ┌──────────────┐                   │
+│  │ FIX TEMPLATE │        │ CONTINUE     │                   │
+│  │ FIX VARIABLES│        │ TO LEVEL 2   │                   │
+│  │ GO TO STEP 1 │        └──────────────┘                   │
+│  └──────────────┘               ↓                           │
+│                          3. Run Level 2: pytest -m level2   │
+│                               ↓                             │
+│                          4. Check: ALL pass?                │
+│                               ↓ NO        ↓ YES             │
+│                          ┌──────────┐  ┌──────────┐         │
+│                          │ FIX IMPORTS│ │ CONTINUE │         │
+│                          │ USE CONTEXT7│ │ TO LEVEL 3│        │
+│                          │ GO TO 3    │ └──────────┘         │
+│                          └──────────┘       ↓               │
+│                          5. Run Level 3: pytest -m level3   │
+│                                 --use-sandbox               │
+│                               ↓ FAIL      ↓ PASS            │
+│                          ┌──────────┐  ┌──────────┐         │
+│                          │ FIX CODE │  │ ✅ READY │         │
+│                          │ CHECK SDK │  │ DELIVER! │         │
+│                          │ GO TO 1   │  └──────────┘         │
+│                          └──────────┘                        │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Common Validation Errors and Fixes
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Unresolved placeholders: {{AGENT_NAME}}` | Missing variable in template | Add to template_vars dict |
+| `SyntaxError: unexpected EOF` | Template logic error | Check Jinja conditionals |
+| `ImportError: chatkit.stores` | Wrong module path | Use `chatkit.store` (singular) |
+| `TypeError: tool_config required` | SDK version mismatch | Add tool_config param |
+| `Server did not start` | Import or config error | Check container logs |
+| `Missing 'use client'` | React Server Component issue | Add directive to components |
+
+#### Minimum Pass Criteria
+
+Before delivery, code MUST pass:
+- **Always**: Level 1 (Syntax) - 100% pass rate required
+- **Always**: Level 2 (Imports) - 100% pass rate required
+- **Backend only**: Level 3 (Runtime) - Agent initialization must pass
+- **Optional**: Level 4 (Integration) - Recommended but not blocking
+
+**If ANY Level 1 or Level 2 test fails, DO NOT DELIVER. Fix and retest.**
 
 ### Step 6: Local Storage (BEFORE WhatsApp Delivery)
 
@@ -369,34 +696,232 @@ After local storage, create ZIP and send to WhatsApp.
 
 ## Code Patterns
 
-### Standard Agent main.py
+### Standard Agent main.py (ChatKit-Compatible)
 
 ```python
 """
-{AGENT_NAME} - OpenAI Agents SDK Application
+{AGENT_NAME} - ChatKit Backend
 """
 
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from agents import Runner
-from agents_config import agent
+from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse, Response
+from fastapi.middleware.cors import CORSMiddleware
+from chatkit.server import StreamingResult
+
+from server import server
 
 load_dotenv()
+
 app = FastAPI(title="{AGENT_NAME}")
+
+# CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+async def root():
+    return {"service": "{AGENT_NAME}", "status": "running"}
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-@app.post("/chat")
-async def chat(message: str):
-    result = await Runner.run(agent, message)
-    return {"response": result.final_output}
+@app.post("/chatkit")
+async def chatkit_endpoint(request: Request):
+    """ChatKit protocol endpoint."""
+    payload = await request.body()
+    result = await server.process(payload, context={})
+
+    if isinstance(result, StreamingResult):
+        return StreamingResponse(
+            result,
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        )
+    return Response(content=result.json, media_type="application/json")
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+### Standard Agent server.py (ChatKitServer)
+
+```python
+"""
+{AGENT_NAME} - ChatKit Server
+"""
+
+from collections.abc import AsyncIterator
+
+from chatkit.server import ChatKitServer
+from chatkit.types import (
+    ThreadMetadata,
+    ThreadStreamEvent,
+    UserMessageItem,
+)
+from chatkit.agents import AgentContext, simple_to_agent_input, stream_agent_response
+from agents import Runner
+
+from agents_config import agent
+from store import InMemoryStore
+
+
+class MyChatKitServer(ChatKitServer[dict]):
+    """ChatKit server integrated with OpenAI Agents SDK."""
+
+    def __init__(self, store: InMemoryStore):
+        super().__init__(store)
+
+    async def respond(
+        self,
+        thread: ThreadMetadata,
+        input_user_message: UserMessageItem | None,
+        context: dict,
+    ) -> AsyncIterator[ThreadStreamEvent]:
+        """Generate response using agent."""
+
+        # Load thread history for context
+        items_page = await self.store.load_thread_items(
+            thread.id,
+            after=None,
+            limit=20,
+            order="asc",
+            context=context,
+        )
+
+        # Convert ChatKit thread items to agent input
+        agent_input = await simple_to_agent_input(items_page.data)
+
+        # Create agent context for streaming
+        agent_context = AgentContext(
+            thread=thread,
+            store=self.store,
+            request_context=context,
+        )
+
+        # Run agent and stream response
+        result = Runner.run_streamed(agent, agent_input, context=agent_context)
+
+        async for event in stream_agent_response(agent_context, result):
+            yield event
+
+
+# Initialize server with in-memory store
+store = InMemoryStore()
+server = MyChatKitServer(store=store)
+```
+
+### Standard Agent store.py (InMemoryStore)
+
+```python
+"""
+In-memory thread store for development.
+"""
+
+from datetime import datetime
+from typing import Dict, List, Optional
+from collections import defaultdict
+from chatkit.store import Store, NotFoundError
+from chatkit.types import ThreadMetadata, ThreadItem, Page, Attachment
+
+
+class InMemoryStore(Store[dict]):
+    """Simple in-memory thread storage for development."""
+
+    def __init__(self):
+        self._threads: Dict[str, ThreadMetadata] = {}
+        self._items: Dict[str, List[ThreadItem]] = defaultdict(list)
+        self._attachments: Dict[str, Attachment] = {}
+
+    async def load_thread(self, thread_id: str, context: dict) -> ThreadMetadata:
+        if thread_id not in self._threads:
+            raise NotFoundError(f"Thread {thread_id} not found")
+        return self._threads[thread_id]
+
+    async def save_thread(self, thread: ThreadMetadata, context: dict) -> None:
+        self._threads[thread.id] = thread
+
+    async def load_threads(
+        self, limit: int, after: Optional[str], order: str, context: dict
+    ) -> Page[ThreadMetadata]:
+        threads = list(self._threads.values())
+        sorted_threads = sorted(threads, key=lambda t: t.created_at, reverse=(order == "desc"))
+        start = 0
+        if after:
+            for idx, t in enumerate(sorted_threads):
+                if t.id == after:
+                    start = idx + 1
+                    break
+        data = sorted_threads[start:start + limit]
+        has_more = start + limit < len(sorted_threads)
+        next_after = data[-1].id if has_more and data else None
+        return Page(data=data, has_more=has_more, after=next_after)
+
+    async def delete_thread(self, thread_id: str, context: dict) -> None:
+        self._threads.pop(thread_id, None)
+        self._items.pop(thread_id, None)
+
+    async def load_thread_items(
+        self, thread_id: str, after: Optional[str], limit: int, order: str, context: dict
+    ) -> Page[ThreadItem]:
+        items = self._items.get(thread_id, [])
+        sorted_items = sorted(items, key=lambda i: i.created_at, reverse=(order == "desc"))
+        start = 0
+        if after:
+            for idx, item in enumerate(sorted_items):
+                if item.id == after:
+                    start = idx + 1
+                    break
+        data = sorted_items[start:start + limit]
+        has_more = start + limit < len(sorted_items)
+        next_after = data[-1].id if has_more and data else None
+        return Page(data=data, has_more=has_more, after=next_after)
+
+    async def add_thread_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+        self._items[thread_id].append(item)
+
+    async def delete_thread_item(self, thread_id: str, item_id: str, context: dict) -> None:
+        if thread_id in self._items:
+            self._items[thread_id] = [i for i in self._items[thread_id] if i.id != item_id]
+
+    async def load_attachment(self, attachment_id: str, context: dict) -> Attachment:
+        if attachment_id not in self._attachments:
+            raise NotFoundError(f"Attachment {attachment_id} not found")
+        return self._attachments[attachment_id]
+
+    async def save_attachment(self, attachment: Attachment, context: dict) -> None:
+        self._attachments[attachment.id] = attachment
+
+    async def delete_attachment(self, attachment_id: str, context: dict) -> None:
+        self._attachments.pop(attachment_id, None)
+
+    async def load_item(self, thread_id: str, item_id: str, context: dict) -> ThreadItem:
+        if thread_id not in self._items:
+            raise NotFoundError(f"Thread {thread_id} not found")
+        for item in self._items[thread_id]:
+            if item.id == item_id:
+                return item
+        raise NotFoundError(f"Item {item_id} not found")
+
+    async def save_item(self, thread_id: str, item: ThreadItem, context: dict) -> None:
+        if thread_id not in self._items:
+            self._items[thread_id] = []
+        for i, existing in enumerate(self._items[thread_id]):
+            if existing.id == item.id:
+                self._items[thread_id][i] = item
+                return
+        self._items[thread_id].append(item)
 ```
 
 ### Realtime Agent server.py
@@ -672,4 +1197,247 @@ Client: "Add web search to my FAQ bot"
 6. Write updated files to current/
 7. Update metadata.json (version: 2)
 8. Send updated ZIP to WhatsApp
+```
+
+---
+
+## ⛔ CRITICAL: TDD + AUTO-VERIFICATION (MANDATORY)
+
+**YOU MUST verify ALL generated code BEFORE delivering to client!**
+
+### Complete Verification Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CODE GENERATION FLOW                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. GENERATE CODE (via IPC templates)                       │
+│              ↓                                              │
+│  2. GENERATE TEST FILES                                     │
+│              ↓                                              │
+│  3. INSTALL DEPENDENCIES                                    │
+│     → pip install -r requirements.txt                       │
+│              ↓                                              │
+│  4. RUN TESTS                                               │
+│     → pytest -v                                             │
+│              ↓                                              │
+│     ┌────────┴────────┐                                     │
+│     ↓                 ↓                                     │
+│  PASS?            FAIL?                                     │
+│     ↓                 ↓                                     │
+│  Continue      ┌──────┴──────┐                              │
+│                ↓             ↓                              │
+│           Read Error    Check Skills                        │
+│                ↓             ↓                              │
+│           Context7      Apply Fix                           │
+│                ↓             ↓                              │
+│           Get Fix       Re-run Tests                        │
+│                └─────────────┘                              │
+│                      ↓                                      │
+│              Loop until PASS                                │
+│                      ↓                                      │
+│  5. START SERVER                                            │
+│     → python main.py                                        │
+│              ↓                                              │
+│  6. TEST HEALTH ENDPOINT                                    │
+│     → curl localhost:8000/health                            │
+│              ↓                                              │
+│     ┌────────┴────────┐                                     │
+│     ↓                 ↓                                     │
+│  WORKS?           ERROR?                                    │
+│     ↓                 ↓                                     │
+│  Continue      Fix → Re-test                                │
+│     ↓                                                       │
+│  7. DELIVER TO CLIENT                                       │
+│     → Only after 100% verification!                         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Backend Test Files (Auto-Generate)
+
+For every backend, generate these test files:
+
+**tests/conftest.py:**
+```python
+"""
+Pytest configuration and fixtures.
+"""
+
+import pytest
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
+
+from main import app
+
+
+@pytest_asyncio.fixture
+async def client():
+    """Async test client for FastAPI app."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+```
+
+**tests/test_health.py:**
+```python
+"""
+Health endpoint tests.
+"""
+
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint(client):
+    """Test health endpoint returns healthy status."""
+    response = await client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
+
+
+@pytest.mark.asyncio
+async def test_root_endpoint(client):
+    """Test root endpoint returns service info."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert "status" in response.json()
+```
+
+**tests/test_store.py:**
+```python
+"""
+Store implementation tests.
+"""
+
+import pytest
+from store import InMemoryStore
+
+
+@pytest.fixture
+def store():
+    """Create fresh store instance."""
+    return InMemoryStore()
+
+
+@pytest.mark.asyncio
+async def test_save_and_load_thread(store):
+    """Test thread save and load."""
+    from chatkit.types import ThreadMetadata
+
+    thread = ThreadMetadata(id="test-1", title="Test Thread")
+    await store.save_thread(thread, context={})
+
+    loaded = await store.load_thread("test-1", context={})
+    assert loaded.id == "test-1"
+
+
+@pytest.mark.asyncio
+async def test_load_threads_pagination(store):
+    """Test thread listing with pagination."""
+    result = await store.load_threads(
+        limit=10,
+        after=None,
+        order="desc",
+        context={}
+    )
+    assert hasattr(result, 'data')
+    assert hasattr(result, 'has_more')
+```
+
+### Frontend Test Files (Auto-Generate)
+
+**__tests__/health.test.ts:**
+```typescript
+import { describe, it, expect } from 'vitest'
+
+describe('Frontend Build', () => {
+  it('should have valid environment', () => {
+    expect(process.env.NODE_ENV).toBeDefined()
+  })
+})
+```
+
+### Error Resolution with Skills + Context7
+
+When tests fail, follow this exact order:
+
+```
+1. READ THE ERROR MESSAGE CAREFULLY
+   → Identify: import error? type error? runtime error?
+
+2. CHECK SKILLS FIRST (MANDATORY)
+   → Re-read: chatkit-fastapi-backend/SKILL.md
+   → Re-read: code-generation/SKILL.md
+   → Skills have UPDATED correct patterns
+
+3. USE CONTEXT7 FOR SDK DOCUMENTATION
+   → Resolve library:
+     context7_resolve_library("openai-chatkit")
+   → Query docs:
+     context7_query_docs(library_id, "error: {paste error}")
+   → Get latest correct implementation
+
+4. APPLY FIX
+   → Use exact code from skills
+   → Or use exact code from Context7
+   → Never guess or use training data!
+
+5. RE-RUN VERIFICATION
+   → pytest -v
+   → python main.py
+   → curl localhost:8000/health
+   → Loop until ALL pass
+```
+
+### Progress Updates (With Verification)
+
+```
+🔄 Code Generation Started
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1/10: Matching template...
+Step 2/10: Loading template files...
+Step 3/10: Generating code with variables...
+Step 4/10: Generating test files...
+Step 5/10: Saving to local storage...
+Step 6/10: Installing dependencies...
+Step 7/10: Running tests...
+Step 8/10: Starting server...
+Step 9/10: Verifying health endpoint...
+Step 10/10: Packaging for delivery...
+
+✅ All Tests Passed!
+✅ Server Running!
+✅ Health Check OK!
+
+📦 Delivering to client...
+```
+
+### If Verification Fails
+
+```
+❌ Test Failed: test_store.py::test_load_threads_pagination
+
+🔍 Analyzing error...
+📚 Checking skills for correct pattern...
+🌐 Querying Context7 for latest docs...
+
+🔧 Fix Applied: Updated load_threads() signature
+
+🔄 Re-running tests...
+✅ All Tests Passed!
+
+Continuing with delivery...
+```
+
+### ⛔ NEVER Skip Verification
+
+```
+❌ FORBIDDEN:
+   Generate → Package → Deliver
+
+✅ REQUIRED:
+   Generate → Test → Verify → Fix if needed → Re-test → Deliver
 ```

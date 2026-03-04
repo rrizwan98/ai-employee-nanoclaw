@@ -1,0 +1,94 @@
+{
+  "scenarios": {
+    "faq_bot": {
+      "user_request": "I need an FAQ bot that can answer questions about my products",
+      "expected_template": "basic-chatbot",
+      "requirements": {
+        "agent_type": "standard",
+        "tools": ["WebSearchTool"],
+        "memory": "sqlite",
+        "use_case": "faq"
+      }
+    },
+    "customer_support": {
+      "user_request": "I need a customer support system with billing and technical departments",
+      "expected_template": "customer-support",
+      "requirements": {
+        "agent_type": "multi-agent",
+        "departments": ["billing", "technical", "general"],
+        "tools": ["WebSearchTool", "FileSearchTool"],
+        "memory": "redis"
+      }
+    },
+    "voice_assistant": {
+      "user_request": "I want a voice assistant for taking phone orders",
+      "expected_template": "realtime-agent",
+      "requirements": {
+        "agent_type": "realtime",
+        "voice": "alloy",
+        "tools": [],
+        "memory": "redis"
+      }
+    },
+    "data_processor": {
+      "user_request": "I need an agent that can process CSV files and validate data",
+      "expected_template": "data-processor",
+      "requirements": {
+        "agent_type": "standard",
+        "tools": ["CodeInterpreterTool"],
+        "memory": "sqlite",
+        "structured_output": true
+      }
+    },
+    "knowledge_base": {
+      "user_request": "Build me a knowledge base assistant that searches through our documents",
+      "expected_template": "rag-assistant",
+      "requirements": {
+        "agent_type": "standard",
+        "tools": ["FileSearchTool"],
+        "memory": "sqlite",
+        "vector_store": true
+      }
+    },
+    "task_automation": {
+      "user_request": "I need an automation system that can schedule and execute tasks",
+      "expected_template": "task-automation",
+      "requirements": {
+        "agent_type": "multi-agent",
+        "tools": ["CodeInterpreterTool", "WebSearchTool"],
+        "memory": "redis",
+        "scheduling": true
+      }
+    },
+    "full_website": {
+      "user_request": "Create a complete website with an AI chat widget",
+      "expected_template": "nextjs-chatkit-ui",
+      "requirements": {
+        "type": "frontend",
+        "framework": "nextjs",
+        "features": ["Hero", "Features", "FAQ", "Contact", "ChatWidget"]
+      }
+    }
+  },
+  "edge_cases": {
+    "vague_request": {
+      "user_request": "I need something for my business",
+      "expected_action": "ask_clarifying_questions",
+      "clarifying_questions": [
+        "What type of business do you have?",
+        "What tasks would you like the AI to help with?",
+        "Do you need voice or text-based interaction?"
+      ]
+    },
+    "unsupported_feature": {
+      "user_request": "I need an agent that can make real-time video calls",
+      "expected_action": "explain_limitations",
+      "response": "Video calls are not currently supported. Would you like voice-based interaction instead?"
+    },
+    "conflicting_requirements": {
+      "user_request": "I need a simple bot that handles complex multi-department workflows",
+      "expected_action": "clarify_complexity",
+      "response": "Multi-department workflows require a multi-agent setup. Would you like me to create a customer-support system?"
+    }
+  }
+}

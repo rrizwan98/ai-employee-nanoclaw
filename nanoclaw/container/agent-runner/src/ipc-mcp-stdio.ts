@@ -816,19 +816,76 @@ server.tool(
 Takes a template name and variable substitutions.
 Returns generated files ready for delivery (WhatsApp ZIP or GitHub).
 
+**IMPORTANT**: Context7 verification runs AUTOMATICALLY before generation
+to ensure templates use the latest SDK patterns.
+
+**PHASE 3**: If verify_before_delivery=true, runs 4-level verification tests
+with auto-fix loop before returning. Blocks delivery if Level 1-2 fail.
+
 Example:
   template_name: "basic-chatbot"
   variables: {
     "AGENT_NAME": "HelpBot",
     "DOMAIN": "E-commerce",
     "USE_WEB_SEARCH": "true"
-  }`,
+  }
+  verify_before_delivery: true`,
   {
     template_name: z.string().describe('Template name to generate from'),
-    variables: z.record(z.string()).describe('Variable substitutions (key-value pairs)'),
+    variables: z.record(z.string(), z.string()).describe('Variable substitutions (key-value pairs)'),
     output_dir: z.string().optional().describe('Output directory for generated files (defaults to temp)'),
+    force_context7_refresh: z.boolean().optional().describe('Force refresh patterns from Context7 (bypass cache)'),
+    verify_before_delivery: z.boolean().optional().default(true).describe('Run verification before delivery (default: true)'),
   },
   async (args) => {
+    // ========================================================================
+    // PHASE 2: Context7 Verification (MANDATORY before generation)
+    // ========================================================================
+    let context7Verified = false;
+    let patternsUpdated: string[] = [];
+    let cacheHits = 0;
+    let verificationWarnings: string[] = [];
+
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { getContext7Verifier } = await import('./context7/index.js');
+      const verifier = getContext7Verifier(
+        '/workspace/.claude/skills',
+        '/workspace/templates'
+      );
+
+      console.log(`[Context7] Starting verification for template: ${args.template_name}`);
+
+      const verification = await verifier.verify({
+        templateName: args.template_name,
+        requestType: 'backend',
+        forceRefresh: args.force_context7_refresh || false,
+      });
+
+      context7Verified = verification.success;
+      patternsUpdated = verification.updatesApplied;
+      cacheHits = verification.cacheHits;
+      verificationWarnings = verification.warnings;
+
+      console.log(`[Context7] Verification complete:`);
+      console.log(`  - Queries executed: ${verification.queriesExecuted}`);
+      console.log(`  - Cache hits: ${cacheHits}`);
+      console.log(`  - Updates applied: ${patternsUpdated.length}`);
+
+      if (patternsUpdated.length > 0) {
+        console.log(`[Context7] Updated patterns:`);
+        patternsUpdated.forEach(p => console.log(`    - ${p}`));
+      }
+    } catch (error) {
+      // Context7 verification failed - continue with warning
+      console.warn(`[Context7] Verification failed, continuing with existing patterns:`, error);
+      verificationWarnings.push(
+        `Context7 verification failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+      // Don't block generation - fall back to existing patterns
+    }
+    // ========================================================================
+
     const result = await callTemplateIPC('generate_from_template', {
       template_name: args.template_name,
       variables: args.variables,
@@ -845,12 +902,94 @@ Example:
     const r = result.result!;
     const files = r.files as Record<string, string>;
     const filesList = Object.keys(files).join('\n- ');
+    const outputDir = r.output_dir as string;
+
+    // ========================================================================
+    // PHASE 3: Verification Sandbox (Pre-delivery testing with auto-fix)
+    // ========================================================================
+    let verificationResult = null;
+    let deliveryReady = true;
+
+    if (args.verify_before_delivery !== false) {
+      try {
+        const { getVerificationOrchestrator } = await import('./verification/index.js');
+        const orchestrator = getVerificationOrchestrator();
+
+        console.log(`[Verification] Starting pre-delivery verification for ${outputDir}`);
+
+        verificationResult = await orchestrator.verify({
+          project_path: outputDir,
+          project_type: 'backend',
+          auto_fix: true,
+          max_attempts: 3,
+          run_level_3: true,
+          run_level_4: true,
+        });
+
+        deliveryReady = verificationResult.delivery_ready;
+
+        console.log(`[Verification] Complete:`);
+        console.log(`  - Attempts: ${verificationResult.attempts}`);
+        console.log(`  - Success: ${verificationResult.success}`);
+        console.log(`  - Delivery Ready: ${deliveryReady}`);
+
+      } catch (error) {
+        console.error(`[Verification] Failed:`, error);
+        verificationWarnings.push(
+          `Verification failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+        // Don't block - but warn
+      }
+    }
+    // ========================================================================
+
+    // Build response with Context7 and Verification metadata
+    let responseText = `Generated ${Object.keys(files).length} files from ${args.template_name} template:\n\n- ${filesList}\n\nOutput directory: ${outputDir}`;
+
+    // Add Context7 verification info
+    responseText += `\n\n**Context7 Verification**: ${context7Verified ? '✅ Verified' : '⚠️ Using cached patterns'}`;
+    if (patternsUpdated.length > 0) {
+      responseText += `\n**Patterns Updated**: ${patternsUpdated.length} (${patternsUpdated.join(', ')})`;
+    }
+
+    // Add Phase 3 Verification info
+    if (verificationResult) {
+      responseText += `\n\n**Pre-Delivery Verification**:`;
+      responseText += `\n- Level 1 (Syntax): ${verificationResult.levels.level1.passed ? '✅' : '❌'}`;
+      responseText += `\n- Level 2 (Import): ${verificationResult.levels.level2.passed ? '✅' : '❌'}`;
+      responseText += `\n- Level 3 (Runtime): ${verificationResult.levels.level3.passed ? '✅' : '⚠️'}`;
+      responseText += `\n- Level 4 (Integration): ${verificationResult.levels.level4.passed ? '✅' : '⚠️'}`;
+      responseText += `\n- Attempts: ${verificationResult.attempts}/${verificationResult.max_attempts}`;
+
+      if (!deliveryReady) {
+        responseText += `\n\n⛔ **DELIVERY BLOCKED**: Level 1 or 2 failed. Fix required.`;
+        if (verificationResult.requires_human) {
+          responseText += `\n⚠️ **Human Review Required**: Auto-fix exhausted after 3 attempts.`;
+        }
+      } else {
+        responseText += `\n\n✅ **Ready for Delivery**`;
+      }
+    }
+
+    if (verificationWarnings.length > 0) {
+      responseText += `\n**Warnings**: ${verificationWarnings.join('; ')}`;
+    }
+
+    if (deliveryReady) {
+      responseText += `\n\nFiles are ready for delivery via WhatsApp ZIP or GitHub.`;
+    }
 
     return {
       content: [{
         type: 'text' as const,
-        text: `Generated ${Object.keys(files).length} files from ${args.template_name} template:\n\n- ${filesList}\n\nOutput directory: ${r.output_dir}\n\nFiles are ready for delivery via WhatsApp ZIP or GitHub.`,
+        text: responseText,
       }],
+      // Include metadata in response for tracking
+      context7_verified: context7Verified,
+      patterns_updated: patternsUpdated,
+      cache_hits: cacheHits,
+      verification_result: verificationResult,
+      delivery_ready: deliveryReady,
     };
   },
 );
@@ -1048,6 +1187,12 @@ Returns generated files ready for delivery.
 IMPORTANT: Always use this for frontend generation instead of writing custom code.
 This ensures proper ChatKit integration and consistent component structure.
 
+PHASE 2: Context7 verification runs AUTOMATICALLY before generation to ensure
+templates use the latest Next.js and ChatKit patterns.
+
+**PHASE 3**: If verify_before_delivery=true, runs frontend verification (npm run build)
+with auto-fix loop before returning. Blocks delivery if build fails.
+
 Example:
   template_name: "nextjs-chatkit-ui"
   variables: {
@@ -1055,13 +1200,64 @@ Example:
     "PROJECT_TITLE": "My SaaS App",
     "COMPANY_NAME": "Acme Inc",
     "BACKEND_URL": "http://localhost:8000/chatkit"
-  }`,
+  }
+  verify_before_delivery: true`,
   {
     template_name: z.string().describe('Frontend template name to generate from'),
-    variables: z.record(z.string()).describe('Variable substitutions (key-value pairs)'),
+    variables: z.record(z.string(), z.string()).describe('Variable substitutions (key-value pairs)'),
     output_dir: z.string().optional().describe('Output directory for generated files'),
+    force_context7_refresh: z.boolean().optional().describe('Force refresh patterns from Context7 (bypass cache)'),
+    verify_before_delivery: z.boolean().optional().default(true).describe('Run verification before delivery (default: true)'),
   },
   async (args) => {
+    // ========================================================================
+    // PHASE 2: Context7 Verification (MANDATORY before frontend generation)
+    // ========================================================================
+    let context7Verified = false;
+    let patternsUpdated: string[] = [];
+    let cacheHits = 0;
+    let verificationWarnings: string[] = [];
+
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { getContext7Verifier } = await import('./context7/index.js');
+      const verifier = getContext7Verifier(
+        '/workspace/.claude/skills',
+        '/workspace/templates'
+      );
+
+      console.log(`[Context7] Starting frontend verification for template: ${args.template_name}`);
+
+      const verification = await verifier.verify({
+        templateName: args.template_name,
+        requestType: 'frontend',
+        forceRefresh: args.force_context7_refresh || false,
+      });
+
+      context7Verified = verification.success;
+      patternsUpdated = verification.updatesApplied;
+      cacheHits = verification.cacheHits;
+      verificationWarnings = verification.warnings;
+
+      console.log(`[Context7] Frontend verification complete:`);
+      console.log(`  - Queries executed: ${verification.queriesExecuted}`);
+      console.log(`  - Cache hits: ${cacheHits}`);
+      console.log(`  - Updates applied: ${patternsUpdated.length}`);
+
+      if (patternsUpdated.length > 0) {
+        console.log(`[Context7] Updated frontend patterns:`);
+        patternsUpdated.forEach(p => console.log(`    - ${p}`));
+      }
+    } catch (error) {
+      // Context7 verification failed - continue with warning
+      console.warn(`[Context7] Frontend verification failed, continuing with existing patterns:`, error);
+      verificationWarnings.push(
+        `Context7 verification failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+      // Don't block generation - fall back to existing patterns
+    }
+    // ========================================================================
+
     const result = await callTemplateIPC('generate_frontend_from_template', {
       template_name: args.template_name,
       variables: args.variables,
@@ -1078,17 +1274,99 @@ Example:
     const r = result.result!;
     const files = r.files as Record<string, string>;
     const fileCount = Object.keys(files).length;
+    const outputDir = r.output_dir as string;
 
     // Categorize files
     const components = Object.keys(files).filter(f => f.includes('/components/')).length;
     const pages = Object.keys(files).filter(f => f.includes('/app/')).length;
     const configs = Object.keys(files).filter(f => f.endsWith('.json') || f.endsWith('.config.js') || f.endsWith('.config.ts')).length;
 
+    // ========================================================================
+    // PHASE 3: Frontend Verification Sandbox (Pre-delivery testing with auto-fix)
+    // ========================================================================
+    let verificationResult = null;
+    let deliveryReady = true;
+
+    if (args.verify_before_delivery !== false) {
+      try {
+        const { getVerificationOrchestrator } = await import('./verification/index.js');
+        const orchestrator = getVerificationOrchestrator();
+
+        console.log(`[Verification] Starting frontend pre-delivery verification for ${outputDir}`);
+
+        verificationResult = await orchestrator.verify({
+          project_path: outputDir,
+          project_type: 'frontend',
+          auto_fix: true,
+          max_attempts: 3,
+          run_level_3: true, // npm run build
+          run_level_4: true, // "use client" check
+        });
+
+        deliveryReady = verificationResult.delivery_ready;
+
+        console.log(`[Verification] Frontend complete:`);
+        console.log(`  - Attempts: ${verificationResult.attempts}`);
+        console.log(`  - Success: ${verificationResult.success}`);
+        console.log(`  - Delivery Ready: ${deliveryReady}`);
+
+      } catch (error) {
+        console.error(`[Verification] Frontend failed:`, error);
+        verificationWarnings.push(
+          `Verification failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+        // Don't block - but warn
+      }
+    }
+    // ========================================================================
+
+    // Build response with Context7 metadata
+    let responseText = `✅ Generated ${fileCount} frontend files from ${args.template_name} template:\n\n📁 Summary:\n- Components: ${components} files\n- Pages: ${pages} files\n- Configs: ${configs} files\n\nOutput directory: ${outputDir}`;
+
+    // Add Context7 verification info
+    responseText += `\n\n**Context7 Verification**: ${context7Verified ? '✅ Verified' : '⚠️ Using cached patterns'}`;
+    if (patternsUpdated.length > 0) {
+      responseText += `\n**Frontend Patterns Updated**: ${patternsUpdated.length} (${patternsUpdated.join(', ')})`;
+    }
+
+    // Add Phase 3 Frontend Verification info
+    if (verificationResult) {
+      responseText += `\n\n**Pre-Delivery Verification**:`;
+      responseText += `\n- Level 1 (Syntax): ${verificationResult.levels.level1.passed ? '✅' : '❌'}`;
+      responseText += `\n- Level 2 (Dependencies): ${verificationResult.levels.level2.passed ? '✅' : '❌'}`;
+      responseText += `\n- Level 3 (Build): ${verificationResult.levels.level3.passed ? '✅' : '⚠️'}`;
+      responseText += `\n- Level 4 (Directives): ${verificationResult.levels.level4.passed ? '✅' : '⚠️'}`;
+      responseText += `\n- Attempts: ${verificationResult.attempts}/${verificationResult.max_attempts}`;
+
+      if (!deliveryReady) {
+        responseText += `\n\n⛔ **DELIVERY BLOCKED**: Build failed. Fix required.`;
+        if (verificationResult.requires_human) {
+          responseText += `\n⚠️ **Human Review Required**: Auto-fix exhausted after 3 attempts.`;
+        }
+      } else {
+        responseText += `\n\n✅ **Ready for Delivery**`;
+      }
+    }
+
+    if (verificationWarnings.length > 0) {
+      responseText += `\n**Warnings**: ${verificationWarnings.join('; ')}`;
+    }
+
+    if (deliveryReady) {
+      responseText += `\n\n🚀 Next steps:\n1. cd frontend\n2. npm install\n3. npm run dev\n\nFiles are ready for delivery via WhatsApp ZIP or GitHub.`;
+    }
+
     return {
       content: [{
         type: 'text' as const,
-        text: `✅ Generated ${fileCount} frontend files from ${args.template_name} template:\n\n📁 Summary:\n- Components: ${components} files\n- Pages: ${pages} files\n- Configs: ${configs} files\n\nOutput directory: ${r.output_dir}\n\n🚀 Next steps:\n1. cd frontend\n2. npm install\n3. npm run dev\n\nFiles are ready for delivery via WhatsApp ZIP or GitHub.`,
+        text: responseText,
       }],
+      // Include Context7 metadata in response for tracking
+      context7_verified: context7Verified,
+      patterns_updated: patternsUpdated,
+      cache_hits: cacheHits,
+      verification_result: verificationResult,
+      delivery_ready: deliveryReady,
     };
   },
 );
@@ -1315,6 +1593,218 @@ Example:
         text: `📚 Documentation for ${args.libraryId}:\n\nQuery: "${args.query}"\n\n${truncated}`,
       }],
     };
+  },
+);
+
+// ============================================================================
+// Verification Tools (Phase 3: Verification Sandbox)
+// Pre-delivery code testing with auto-fix loop
+// ============================================================================
+
+server.tool(
+  'verify_project',
+  `Verify generated code before delivery.
+
+Runs 4-level verification tests on backend or frontend code:
+- Level 1: Syntax tests (AST parse, template variable check)
+- Level 2: Import tests (pip install, import verification)
+- Level 3: Runtime tests (agent init, server start)
+- Level 4: Integration tests (endpoints, build)
+
+If tests fail, auto-fix is attempted using Skills, Templates, and Context7.
+Maximum 3 attempts before human escalation.
+
+IMPORTANT: Human receives alerts on EVERY attempt with error details.
+
+Example:
+  project_path: "/workspace/client-agents/123/my-bot/backend"
+  project_type: "backend"
+  auto_fix: true`,
+  {
+    project_path: z.string().describe('Path to the project directory'),
+    project_type: z.enum(['backend', 'frontend']).describe('Type of project to verify'),
+    auto_fix: z.boolean().optional().default(true).describe('Enable auto-fix on failures (default: true)'),
+    max_attempts: z.number().optional().default(3).describe('Maximum fix attempts (default: 3)'),
+    run_level_3: z.boolean().optional().default(true).describe('Run Level 3 runtime tests'),
+    run_level_4: z.boolean().optional().default(true).describe('Run Level 4 integration tests'),
+  },
+  async (args) => {
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { getVerificationOrchestrator } = await import('./verification/index.js');
+      const orchestrator = getVerificationOrchestrator();
+
+      console.log(`[Verification] Starting verification for ${args.project_path} (${args.project_type})`);
+
+      const result = await orchestrator.verify({
+        project_path: args.project_path,
+        project_type: args.project_type,
+        auto_fix: args.auto_fix,
+        max_attempts: args.max_attempts,
+        run_level_3: args.run_level_3,
+        run_level_4: args.run_level_4,
+      });
+
+      // Format response
+      let responseText = `Verification ${result.success ? 'PASSED' : 'FAILED'}\n\n`;
+      responseText += `Project: ${result.project_path}\n`;
+      responseText += `Type: ${result.project_type}\n`;
+      responseText += `Attempts: ${result.attempts}/${result.max_attempts}\n\n`;
+
+      // Level results
+      responseText += `**Level Results:**\n`;
+      responseText += `- Level 1 (Syntax): ${result.levels.level1.passed ? '✅' : '❌'}\n`;
+      responseText += `- Level 2 (Import): ${result.levels.level2.passed ? '✅' : '❌'}\n`;
+      responseText += `- Level 3 (Runtime): ${result.levels.level3.passed ? '✅' : '⚠️'}\n`;
+      responseText += `- Level 4 (Integration): ${result.levels.level4.passed ? '✅' : '⚠️'}\n\n`;
+
+      // Endpoint details (backend)
+      if (result.endpoints) {
+        responseText += `**Endpoints Tested:** ${result.endpoints.tested}\n`;
+        responseText += `**Endpoints Passed:** ${result.endpoints.passed}\n`;
+        if (result.endpoints.failures.length > 0) {
+          responseText += `**Failed Endpoints:**\n`;
+          result.endpoints.failures.forEach(f => {
+            responseText += `  - ${f.method} ${f.path}: expected ${f.expected_status}, got ${f.actual_status || 'error'}\n`;
+          });
+        }
+        responseText += '\n';
+      }
+
+      // Delivery decision
+      responseText += `**Delivery Ready:** ${result.delivery_ready ? '✅ Yes' : '❌ No'}\n`;
+      if (result.requires_human) {
+        responseText += `**⚠️ Human Review Required**\n`;
+      }
+
+      responseText += `\nTotal Duration: ${result.total_duration_ms}ms`;
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: responseText,
+        }],
+        // Include full result for programmatic access
+        verification_result: result,
+      };
+    } catch (error) {
+      return {
+        content: [{
+          type: 'text' as const,
+          text: `Verification failed: ${error instanceof Error ? error.message : String(error)}`,
+        }],
+        isError: true,
+      };
+    }
+  },
+);
+
+server.tool(
+  'validate_project_code',
+  `Validate project code before delivery (TDD enforcement).
+
+This is a MANDATORY check before any code delivery.
+Runs Level 1-2 tests (syntax + imports) which BLOCK delivery if failed.
+Optionally runs Level 3-4 tests (runtime + integration) which WARN if failed.
+
+Use this tool:
+- Before packaging ZIP for WhatsApp
+- Before pushing to GitHub
+- For template-generated code AND manual code
+- For existing project updates
+
+Example:
+  project_path: "/workspace/client-agents/123/my-bot/backend"
+  project_type: "backend"
+  run_level_3: true`,
+  {
+    project_path: z.string().describe('Path to the project directory'),
+    project_type: z.enum(['backend', 'frontend']).describe('Type of project'),
+    run_level_3: z.boolean().optional().default(false).describe('Also run Level 3 runtime tests'),
+    run_level_4: z.boolean().optional().default(false).describe('Also run Level 4 integration tests'),
+  },
+  async (args) => {
+    try {
+      const { getVerificationOrchestrator } = await import('./verification/index.js');
+      const orchestrator = getVerificationOrchestrator();
+
+      // Quick verification (Level 1-2 only by default)
+      const result = await orchestrator.verify({
+        project_path: args.project_path,
+        project_type: args.project_type,
+        auto_fix: false, // No auto-fix for validation
+        max_attempts: 1,
+        run_level_3: args.run_level_3,
+        run_level_4: args.run_level_4,
+      });
+
+      // Check blocking levels (1-2)
+      const level1Pass = result.levels.level1.passed;
+      const level2Pass = result.levels.level2.passed;
+      const canDeliver = level1Pass && level2Pass;
+
+      // Format response
+      let responseText: string;
+
+      if (canDeliver) {
+        responseText = `✅ SAFE TO DELIVER - Level 1-2 passed\n\n`;
+        responseText += `Level 1 (Syntax): ✅ Passed\n`;
+        responseText += `Level 2 (Import): ✅ Passed\n`;
+
+        if (args.run_level_3) {
+          responseText += `Level 3 (Runtime): ${result.levels.level3.passed ? '✅' : '⚠️'}\n`;
+        }
+        if (args.run_level_4) {
+          responseText += `Level 4 (Integration): ${result.levels.level4.passed ? '✅' : '⚠️'}\n`;
+        }
+      } else {
+        responseText = `⛔ DO NOT DELIVER - Level 1 or 2 failed\n\n`;
+        responseText += `Level 1 (Syntax): ${level1Pass ? '✅' : '❌'}\n`;
+        responseText += `Level 2 (Import): ${level2Pass ? '✅' : '❌'}\n\n`;
+
+        // Show errors
+        const errors = [
+          ...result.levels.level1.errors,
+          ...result.levels.level2.errors,
+        ];
+
+        if (errors.length > 0) {
+          responseText += `**Errors:**\n`;
+          errors.forEach(e => {
+            responseText += `  - [${e.level}] ${e.type}: ${e.message}\n`;
+            if (e.location) {
+              responseText += `    Location: ${e.location}\n`;
+            }
+          });
+        }
+
+        responseText += `\nFix the errors and run validate_project_code again.`;
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: responseText,
+        }],
+        // Include result for programmatic access
+        tdd_validation: {
+          success: canDeliver,
+          level1: { passed: level1Pass, errors: result.levels.level1.errors },
+          level2: { passed: level2Pass, errors: result.levels.level2.errors },
+          level3: args.run_level_3 ? { passed: result.levels.level3.passed, errors: result.levels.level3.errors } : undefined,
+          level4: args.run_level_4 ? { passed: result.levels.level4.passed, errors: result.levels.level4.errors } : undefined,
+        },
+        delivery_decision: canDeliver ? '✅ SAFE TO DELIVER' : '⛔ DO NOT DELIVER',
+      };
+    } catch (error) {
+      return {
+        content: [{
+          type: 'text' as const,
+          text: `⛔ TDD VALIDATION FAILED - DO NOT DELIVER!\n\nError: ${error instanceof Error ? error.message : String(error)}`,
+        }],
+        isError: true,
+      };
+    }
   },
 );
 

@@ -4,7 +4,7 @@ Processor Agent
 Processes validated {{DOMAIN}} data according to business logic and rules.
 """
 
-from agents_sdk import Agent
+from agents import Agent
 from models.schemas import ProcessedData
 from config import settings
 

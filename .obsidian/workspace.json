@@ -1,0 +1,225 @@
+{
+  "main": {
+    "id": "45b8dd9e9e91a828",
+    "type": "split",
+    "children": [
+      {
+        "id": "9e85641ad6346d72",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "970a4e214d12661a",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/ai-employee-v2.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "ai-employee-v2"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "faf6b66aff1e80a9",
+    "type": "split",
+    "children": [
+      {
+        "id": "4010b4efcef19309",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "72b2c6355400823a",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "58376085176c4ac2",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "3d50226ddcf1358f",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "8197fadad8ebb471",
+    "type": "split",
+    "children": [
+      {
+        "id": "ae11b0260fb18ccf",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8e44447ed0b08a37",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "docs/ai-employee-v2.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for ai-employee-v2"
+            }
+          },
+          {
+            "id": "4b36721658de51b8",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "docs/ai-employee-v2.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from ai-employee-v2"
+            }
+          },
+          {
+            "id": "afbfe49561b7362e",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "dc8a06a75a7677ea",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "0d32873500a271a4",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "docs/ai-employee-v2.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of ai-employee-v2"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "970a4e214d12661a",
+  "lastOpenFiles": [
+    "nanoclaw/store/auth/pre-key-1018.json",
+    "nanoclaw/store/auth/pre-key-1017.json",
+    "nanoclaw/store/auth/pre-key-1016.json",
+    "nanoclaw/store/auth/pre-key-1015.json",
+    "nanoclaw/store/auth/pre-key-1014.json",
+    "nanoclaw/store/auth/pre-key-1013.json",
+    "nanoclaw/store/auth/pre-key-1012.json",
+    "nanoclaw/store/auth/pre-key-1010.json",
+    "nanoclaw/store/auth/pre-key-1009.json",
+    "nanoclaw/store/auth/pre-key-1011.json",
+    "nanoclaw/data/ipc/dm-923032206662/input/1772446865684-z0h5.json",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/next/dist/compiled/@babel/runtime/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/next/dist/compiled/regenerator-runtime/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/next/dist/compiled/react-refresh/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/next/dist/compiled/react-is/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/__tests__/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/sucrase/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/next/node_modules/postcss/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/next/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/next/license.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/@babel/helpers/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/undici-types/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/aria-query/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/object-inspect/CHANGELOG.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/regexp.prototype.flags/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/regexp.prototype.flags/CHANGELOG.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/object-is/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/object-is/CHANGELOG.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/es-errors/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/es-errors/CHANGELOG.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/react/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/autoprefixer/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/math-intrinsics/README.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/math-intrinsics/CHANGELOG.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/@adobe/css-tools/docs/EXAMPLES.md",
+    "client-agents/923001234567@s.whatsapp.net/techgadgets-support/frontend/node_modules/@adobe/css-tools/docs/CHANGELOG.md"
+  ]
+}

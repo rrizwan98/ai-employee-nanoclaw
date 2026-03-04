@@ -3,9 +3,7 @@
 Uses OpenAI File Search with vector store for document retrieval.
 Domain: {{DOMAIN}}
 """
-from agents import Agent
-from agents.extensions.handoffs import Handoffs
-from agents.extensions.tools import FileSearchTool
+from agents import Agent, FileSearchTool
 from config import settings
 
 
